@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки - Музыкальная Рулетка</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-900 to-purple-800 min-h-screen text-white">
+<main class="container mx-auto px-4 py-8">
+        <div class="max-w-3xl mx-auto bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl">
+            <h1 class="text-4xl font-bold mb-6 flex items-center gap-3">
+                <i data-feather="settings"></i> Настройки
+            </h1>
+            
+            <div class="space-y-6">
+                <div class="bg-white bg-opacity-20 p-6 rounded-xl">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <i data-feather="music"></i> Настройки песен
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="songCount" class="block text-lg mb-2">Количество песен в рулетке:</label>
+                            <div class="flex items-center gap-4">
+                                <input type="range" id="songCount" min="10" max="200" step="10" value="100" class="w-full">
+                                <span id="songCountValue" class="text-xl font-bold min-w-[3rem]">100</span>
+                            </div>
+                            <p class="text-sm opacity-80 mt-1">Минимум 10, максимум 200</p>
+                        </div>
+                        
+                        <button id="saveSettings" class="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 mt-4">
+                            <i data-feather="save"></i> Сохранить настройки
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        feather.replace();
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const songCountInput = document.getElementById('songCount');
+            const songCountValue = document.getElementById('songCountValue');
+            const saveBtn = document.getElementById('saveSettings');
+            
+            // Load saved settings
+            const savedCount = localStorage.getItem('songCount') || 100;
+            songCountInput.value = savedCount;
+            songCountValue.textContent = savedCount;
+            
+            // Update displayed value while sliding
+            songCountInput.addEventListener('input', () => {
+                songCountValue.textContent = songCountInput.value;
+            });
+            
+            // Save settings
+            saveBtn.addEventListener('click', () => {
+                localStorage.setItem('songCount', songCountInput.value);
+                
+                // Show success notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in opacity-0';
+                notification.innerHTML = `
+                    <i data-feather="check-circle"></i>
+                    <span>Настройки сохранены!</span>
+                `;
+                document.body.appendChild(notification);
+                feather.replace();
+                
+                // Trigger animation
+                setTimeout(() => {
+                    notification.classList.add('opacity-100');
+                    setTimeout(() => {
+                        notification.classList.remove('opacity-100');
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 300);
+                    }, 3000);
+                }, 10);
+});
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

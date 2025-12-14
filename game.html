@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Музыкальная Рулетка</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="components/navbar.js"></script>
+</head>
+
+<body class="bg-gradient-to-br from-indigo-900 to-purple-800 min-h-screen text-white">
+    <custom-navbar></custom-navbar>
+
+    <main class="container mx-auto px-4 py-8 flex flex-col items-center">
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold mb-4">Музыкальная Рулетка</h1>
+            <!-- <p class="text-xl opacity-90">Крутите рулетку, чтобы открыть случайный музыкальный трек!</p> -->
+        </div>
+        <div id="mainCard"
+            class="w-full max-w-2xl bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl mb-8">
+            <div id="currentNumber" class="text-9xl font-bold text-center mb-8 text-yellow-300 animate-pulse">?</div>
+
+            <div class="flex justify-center mb-8">
+                <button id="spinBtn"
+                    class="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all flex items-center gap-2">
+                    <i data-feather="play"></i> Крутить рулетку
+                </button>
+            </div>
+
+            <!-- Bingo panel (hidden unless ?card=NAME provided) -->
+            <div id="bingoPanel" class="hidden bg-white bg-opacity-5 rounded-2xl p-4 mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-4">
+                        <h3 class="text-xl font-semibold">Бинго-карта</h3>
+                        <span class="text-sm opacity-80">Отмечено: <span id="bingoMarkedCount">0/25</span></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="bingoResetBtn"
+                            class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded-lg">Сброс</button>
+                        <button id="bingoShareBtn"
+                            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-lg">Копировать
+                            ссылку</button>
+                    </div>
+                </div>
+                <div id="bingoCard" class="grid grid-cols-5 gap-2"></div>
+            </div>
+
+            <div id="playerContainer" class="player-hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold">Сейчас играет:</h3>
+                    <span id="songTitle" class="text-lg"></span>
+                </div>
+                <audio id="audioPlayer" controls class="w-full"></audio>
+            </div>
+        </div>
+
+        <div class="w-full max-w-2xl bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-6 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                <i data-feather="list"></i> Выпавшие числа
+            </h2>
+            <div id="playedNumbers" class="flex flex-wrap gap-2 min-h-12 mb-6"></div>
+        </div>
+
+        <div class="flex mt-6 justify-center">
+            <button id="newGameBtn"
+                class="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-all flex items-center gap-2">
+                <i data-feather="refresh-cw"></i> Новая игра
+            </button>
+        </div>
+
+        </div>
+    </main>
+
+    <!-- Custom Modal -->
+    <div id="confirmModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div
+            class="bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 max-w-md mx-4 shadow-2xl transform transition-all modal-content">
+            <div class="text-center mb-6">
+                <i data-feather="alert-circle" class="mx-auto mb-4"
+                    style="width: 48px; height: 48px; color: #fbbf24;"></i>
+                <h3 class="text-2xl font-bold mb-2">Подтверждение</h3>
+                <p class="text-lg opacity-90">Вы уверены, что хотите начать новую игру? Все сыгранные номера будут
+                    сброшены.</p>
+            </div>
+            <div class="flex gap-4 justify-center">
+                <button id="modalCancel"
+                    class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-all flex items-center gap-2">
+                    <i data-feather="x"></i> Отмена
+                </button>
+                <button id="modalConfirm"
+                    class="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-all flex items-center gap-2">
+                    <i data-feather="check"></i> Да, начать
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="notifyModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-6 max-w-sm mx-4 shadow-2xl modal-content">
+            <div class="text-center">
+                <p id="notifyMessage" class="mb-4"></p>
+                <div class="flex justify-center">
+                    <button id="notifyOk"
+                        class="bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+
+</html>

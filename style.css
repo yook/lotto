@@ -1,0 +1,260 @@
+
+@keyframes numberChange {
+    0% { 
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% { 
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes winnerScale {
+    0% { 
+        transform: scale(1);
+    }
+    50% { 
+        transform: scale(1.2);
+    }
+    100% { 
+        transform: scale(1);
+    }
+}
+
+.number-change {
+    animation: numberChange 0.3s ease-out;
+}
+
+.winner-scale {
+    animation: winnerScale 0.6s ease-in-out;
+}
+
+#currentNumber {
+    transition: transform 0.08s ease-in-out, opacity 0.08s ease-in-out;
+}
+
+#currentNumber.spinning {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+@keyframes spinningNumber {
+    0% { 
+        transform: scale(0.95);
+    }
+    100% { 
+        transform: scale(1);
+    }
+}
+.number-tile.winner {
+    animation: winnerPulse 0.5s ease-in-out 3;
+}
+
+@keyframes winnerPulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 215, 0, 0.7); }
+    50% { transform: scale(1.2); box-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
+    100% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 215, 0, 0.7); }
+}
+.number-tile {
+    transition: all 0.3s ease;
+    width: 3rem;
+    height: 3rem;
+    font-size: 0.95rem;
+}
+.number-tile:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+nav a, nav button {
+    transition: all 0.2s ease;
+}
+
+nav a:hover, nav button:hover {
+    transform: scale(1.1);
+}
+
+.nav-left, .nav-right {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+#newGameBtn {
+    background: linear-gradient(to right, #10b981, #3b82f6);
+    border: none;
+    cursor: pointer;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+#newGameBtn:hover {
+    background: linear-gradient(to right, #059669, #2563eb);
+    transform: translateY(-2px);
+}
+
+#newGameBtn i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+}
+
+@keyframes modalSlideIn {
+    from { 
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to { 
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+/* Keep space for player so showing it doesn't push content below */
+#mainCard {
+    position: relative;
+    padding-bottom: 11rem; /* more reserve room for player on desktop */
+    min-height: 320px;
+}
+
+#playerContainer {
+    position: absolute;
+    left: 2rem;
+    right: 2rem;
+    bottom: 2rem;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    padding: 0;
+}
+
+.player-hidden {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+}
+
+#playerContainer:not(.player-hidden) {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Bingo styles */
+#bingoPanel {
+    margin-bottom: 2rem;
+}
+#bingoCard {
+    grid-auto-rows: auto; /* let rows grow to fit square cells */
+}
+.bingo-cell {
+    background: rgba(99,102,241,0.12);
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    min-height: 3.4rem;
+}
+.bingo-cell:focus {
+    outline: 2px solid rgba(99,102,241,0.6);
+}
+.bingo-cell:hover { transform: translateY(-3px); }
+.bingo-marked {
+    background: linear-gradient(90deg, rgba(99,102,241,0.9), rgba(139,92,246,0.9));
+    box-shadow: 0 6px 18px rgba(99,102,241,0.18);
+}
+.bingo-number {
+    font-size: 1rem;
+}
+
+/* Responsive adjustments for Bingo card and mobile devices */
+#bingoCard {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+}
+.bingo-cell {
+    aspect-ratio: 1 / 1;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+@media (max-width: 640px) {
+    /* Make main card more compact on phones */
+    #mainCard { 
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+        min-height: auto;
+    }
+
+    /* On small screens place the player in normal flow so it doesn't overlap content */
+    #playerContainer {
+        position: static;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        margin-top: 0.5rem;
+        transform: none;
+        padding: 0;
+    }
+    #playerContainer audio { height: 2rem; }
+
+    /* Scale the big roulette number to fit small screens */
+    #currentNumber { 
+        font-size: clamp(2.5rem, 16vw, 4.5rem); 
+        margin-bottom: 0.75rem;
+    }
+
+    /* Bingo card tighter spacing and fills vertical space */
+    #bingoCard { 
+        gap: 0.25rem; 
+        grid-auto-rows: 1fr;
+        height: calc(100vh - 260px);
+        max-height: 80vh;
+    }
+    .bingo-cell { 
+        padding: 0.2rem; 
+        font-size: 0.7rem; 
+        border-radius: 0.35rem; 
+        aspect-ratio: auto;
+        height: 100%;
+    }
+
+    /* Played numbers tiles smaller on phones */
+    .number-tile { 
+        width: 2rem; 
+        height: 2rem; 
+        font-size: 0.7rem; 
+        margin: 0.2rem;
+    }
+}
+
+/* When bingo panel is visible inside the main card ensure it pushes content down */
+#bingoPanel {
+    margin-bottom: 1rem;
+}
+
