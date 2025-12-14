@@ -39,11 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Bingo elements
-  let bingoPanel = document.getElementById("bingoPanel");
   let bingoCardEl = document.getElementById("bingoCard");
   let bingoMarkedCount = document.getElementById("bingoMarkedCount");
-  let bingoResetBtn = document.getElementById("bingoResetBtn");
-  let bingoShareBtn = document.getElementById("bingoShareBtn");
 
   const urlParams = new URLSearchParams(window.location.search);
   const cardName = urlParams.get("card");
@@ -131,38 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let cardNumbers, marks;
 
     try {
-      if (!bingoPanel) {
-        const panel = document.createElement("div");
-        panel.id = "bingoPanel";
-        panel.className = "bg-white bg-opacity-5 rounded-2xl p-4 mb-6";
-        const container =
-          document.querySelector("main .container") ||
-          document.querySelector("main") ||
-          document.body;
-        container.insertBefore(panel, container.firstChild);
-        bingoPanel = panel;
-      }
-
-      if (!bingoCardEl) {
-        const grid = document.createElement("div");
-        grid.id = "bingoCard";
-        grid.className = "grid grid-cols-5 gap-2";
-        bingoPanel.appendChild(grid);
-        bingoCardEl = grid;
-      }
-
-      if (!bingoMarkedCount) {
-        const sc = document.createElement("span");
-        sc.id = "bingoMarkedCount";
-        sc.className = "text-sm opacity-80";
-        sc.textContent = "0/25";
-        const header = bingoPanel.querySelector("h3");
-        if (header && header.parentElement)
-          header.parentElement.appendChild(sc);
-        else bingoPanel.insertBefore(sc, bingoPanel.firstChild);
-        bingoMarkedCount = sc;
-      }
-
+      // Use existing #bingoCard and #bingoMarkedCount from static HTML
       cardNumbers = generateCardNumbers(activeCardName, songCount, 25);
       marks = loadMarks(activeCardName);
       renderBingo(cardNumbers, marks);
@@ -207,38 +173,6 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!cell) return;
           cell.click();
           e.preventDefault();
-        }
-      });
-    }
-
-    if (bingoResetBtn) {
-      bingoResetBtn.addEventListener("click", () => {
-        if (!confirm("Сбросить отметки на этой карточке?")) return;
-        const newMarks = Array(25).fill(false);
-        saveMarks(activeCardName, newMarks);
-        renderBingo(cardNumbers, newMarks);
-      });
-    }
-
-    if (bingoShareBtn) {
-      bingoShareBtn.addEventListener("click", async () => {
-        const base = window.location.origin + window.location.pathname;
-        const url = base + "?card=" + encodeURIComponent(activeCardName);
-
-        try {
-          await navigator.clipboard.writeText(url);
-          showNotification("Ссылка скопированна");
-        } catch (err) {
-          const ta = document.createElement("textarea");
-          ta.value = url;
-          document.body.appendChild(ta);
-          ta.select();
-          try {
-            document.execCommand("copy");
-            showNotification("Ссылка скопированна");
-          } finally {
-            ta.remove();
-          }
         }
       });
     }

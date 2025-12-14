@@ -31,23 +31,8 @@
                 </button>
             </div>
 
-            <!-- Bingo panel (hidden unless ?card=NAME provided) -->
-            <div id="bingoPanel" class="hidden bg-white bg-opacity-5 rounded-2xl p-4 mb-6">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-4">
-                        <h3 class="text-xl font-semibold">Бинго-карта</h3>
-                        <span class="text-sm opacity-80">Отмечено: <span id="bingoMarkedCount">0/25</span></span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button id="bingoResetBtn"
-                            class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded-lg">Сброс</button>
-                        <button id="bingoShareBtn"
-                            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-lg">Копировать
-                            ссылку</button>
-                    </div>
-                </div>
-                <div id="bingoCard" class="grid grid-cols-5 gap-2"></div>
-            </div>
+            <!-- Bingo panel is created dynamically when needed -->
+            <div id="bingoCard" class="grid grid-cols-5 gap-2"></div>
 
             <div id="playerContainer" class="player-hidden">
                 <div class="flex items-center justify-between mb-4">

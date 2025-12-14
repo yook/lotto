@@ -134,6 +134,10 @@ nav a:hover, nav button:hover {
     position: relative;
     padding-bottom: 11rem; /* more reserve room for player on desktop */
     min-height: 320px;
+    box-sizing: border-box;
+    /* allow the card to shrink on short viewports and scroll internally */
+    max-height: calc(100vh - 160px);
+    overflow: auto;
 }
 
 #playerContainer {
@@ -158,11 +162,10 @@ nav a:hover, nav button:hover {
 }
 
 /* Bingo styles */
-#bingoPanel {
-    margin-bottom: 2rem;
-}
 #bingoCard {
-    grid-auto-rows: auto; /* let rows grow to fit square cells */
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 1fr;
+    gap: 0.5rem; /* fixed gap between cells */
 }
 .bingo-cell {
     background: rgba(99,102,241,0.12);
@@ -175,7 +178,9 @@ nav a:hover, nav button:hover {
     cursor: pointer;
     user-select: none;
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-    min-height: 3.4rem;
+    aspect-ratio: 1 / 1;
+    padding: 0.5rem;
+    font-size: clamp(0.8rem, 1.5vw, 1.2rem);
 }
 .bingo-cell:focus {
     outline: 2px solid rgba(99,102,241,0.6);
@@ -190,13 +195,6 @@ nav a:hover, nav button:hover {
 }
 
 /* Responsive adjustments for Bingo card and mobile devices */
-#bingoCard {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.5rem;
-}
-.bingo-cell {
-    aspect-ratio: 1 / 1;
-    padding: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -225,7 +223,7 @@ nav a:hover, nav button:hover {
 
     /* Scale the big roulette number to fit small screens */
     #currentNumber { 
-        font-size: clamp(2.5rem, 16vw, 4.5rem); 
+        font-size: clamp(2.5rem, 16vw, 4.5rem);
         margin-bottom: 0.75rem;
     }
 
@@ -253,8 +251,46 @@ nav a:hover, nav button:hover {
     }
 }
 
+/* Layout helpers to keep page within viewport height */
+main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* On larger screens allow the card to expand normally */
+@media (min-width: 768px) {
+    #mainCard {
+        max-height: none;
+        overflow: visible;
+        padding-bottom: 11rem;
+    }
+}
+
+/* Make the main big number responsive on wide screens too */
+#currentNumber {
+    font-size: clamp(3rem, 12vw, 9rem);
+}
+
+/* Ensure no decorative marker appears before headings (fix stray dot above titles) */
+h1::before,
+h1::after,
+h1::marker {
+    content: none !important;
+    display: none !important;
+}
+
 /* When bingo panel is visible inside the main card ensure it pushes content down */
-#bingoPanel {
-    margin-bottom: 1rem;
+
+/* Mobile layout helpers */
+html, body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+/* Prevent horizontal scroll (safe across pages) */
+body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
