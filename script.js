@@ -125,19 +125,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function checkBingo(marks) {
-    // Check if all filled (25/25)
-    if (marks.every(Boolean)) return "full";
+    const achieved = [];
 
     // Check first row (первая горизонталь)
-    if (marks.slice(0, 5).every(Boolean)) return "row1";
+    if (marks.slice(0, 5).every(Boolean)) achieved.push("row1");
 
     // Check first column (первая вертикаль)
-    if ([0, 1, 2, 3, 4].every((row) => marks[row * 5])) return "col1";
+    if ([0, 1, 2, 3, 4].every((row) => marks[row * 5])) achieved.push("col1");
 
     // Check first diagonal (первая диагональ - главная)
-    if ([0, 6, 12, 18, 24].every((i) => marks[i])) return "diag1";
+    if ([0, 6, 12, 18, 24].every((i) => marks[i])) achieved.push("diag1");
 
-    return null;
+    // Check if all filled (25/25) - check last as it's the final achievement
+    if (marks.every(Boolean)) achieved.push("full");
+
+    return achieved;
   }
 
   function showBingoWin(type) {
@@ -214,14 +216,16 @@ document.addEventListener("DOMContentLoaded", () => {
         updateMarkedCount(marks);
 
         // Check for bingo - only show modal for NEW specific achievements
-        const bingoType = checkBingo(marks);
-        if (bingoType) {
+        const bingoTypes = checkBingo(marks);
+        if (bingoTypes.length > 0) {
           const shownKey = `bingo:shown:${activeCardName}`;
           const shown = JSON.parse(localStorage.getItem(shownKey) || "[]");
-          if (!shown.includes(bingoType)) {
-            shown.push(bingoType);
+          // Find first achievement that hasn't been shown yet
+          const newType = bingoTypes.find((type) => !shown.includes(type));
+          if (newType) {
+            shown.push(newType);
             localStorage.setItem(shownKey, JSON.stringify(shown));
-            setTimeout(() => showBingoWin(bingoType), 300);
+            setTimeout(() => showBingoWin(newType), 300);
           }
         }
       });
