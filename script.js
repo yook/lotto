@@ -124,6 +124,55 @@ document.addEventListener("DOMContentLoaded", () => {
     if (bingoMarkedCount) bingoMarkedCount.textContent = `${c}/25`;
   }
 
+  function checkBingo(marks) {
+    // Check if all filled (25/25)
+    if (marks.every(Boolean)) return "full";
+
+    // Check first row (первая горизонталь)
+    if (marks.slice(0, 5).every(Boolean)) return "row1";
+
+    // Check first column (первая вертикаль)
+    if ([0, 1, 2, 3, 4].every((row) => marks[row * 5])) return "col1";
+
+    // Check first diagonal (первая диагональ - главная)
+    if ([0, 6, 12, 18, 24].every((i) => marks[i])) return "diag1";
+
+    return null;
+  }
+
+  function showBingoWin(type) {
+    const modal = document.getElementById("bingoWinModal");
+    if (!modal) return;
+
+    // Update message based on type
+    const message = modal.querySelector(".bingo-message");
+    if (message) {
+      message.textContent =
+        type === "full" ? "Вы победитель!" : "Вы собрали линию!";
+    }
+
+    modal.classList.remove("hidden");
+    // Trigger confetti animation
+    const confettiContainer = modal.querySelector(".confetti-container");
+    if (confettiContainer) {
+      confettiContainer.innerHTML = "";
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement("div");
+        confetti.className = "confetti";
+        confetti.style.left = Math.random() * 100 + "%";
+        confetti.style.animationDelay = Math.random() * 0.5 + "s";
+        confetti.style.backgroundColor = [
+          "#ff6b6b",
+          "#4ecdc4",
+          "#45b7d1",
+          "#f9ca24",
+          "#6c5ce7",
+        ][Math.floor(Math.random() * 5)];
+        confettiContainer.appendChild(confetti);
+      }
+    }
+  }
+
   if (activeCardName) {
     let cardNumbers, marks;
 
@@ -163,6 +212,18 @@ document.addEventListener("DOMContentLoaded", () => {
           console.warn("Failed saving bingo marks", err);
         }
         updateMarkedCount(marks);
+
+        // Check for bingo - only show modal for NEW specific achievements
+        const bingoType = checkBingo(marks);
+        if (bingoType) {
+          const shownKey = `bingo:shown:${activeCardName}`;
+          const shown = JSON.parse(localStorage.getItem(shownKey) || "[]");
+          if (!shown.includes(bingoType)) {
+            shown.push(bingoType);
+            localStorage.setItem(shownKey, JSON.stringify(shown));
+            setTimeout(() => showBingoWin(bingoType), 300);
+          }
+        }
       });
     }
 
@@ -315,6 +376,20 @@ document.addEventListener("DOMContentLoaded", () => {
           resolve(false);
         }
       });
+    });
+  }
+
+  // Bingo win modal close handler
+  const bingoWinModal = document.getElementById("bingoWinModal");
+  const bingoWinOk = document.getElementById("bingoWinOk");
+  if (bingoWinModal && bingoWinOk) {
+    bingoWinOk.addEventListener("click", () => {
+      bingoWinModal.classList.add("hidden");
+    });
+    bingoWinModal.addEventListener("click", (e) => {
+      if (e.target === bingoWinModal) {
+        bingoWinModal.classList.add("hidden");
+      }
     });
   }
 

@@ -25,6 +25,25 @@
 
     <script src="script.js"></script>
     <script>feather.replace()</script>
+
+    <!-- Bingo Win Modal -->
+    <div id="bingoWinModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="confetti-container fixed inset-0 pointer-events-none z-40"></div>
+        <div
+            class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-8 w-80 h-80 mx-4 shadow-2xl modal-content transform scale-animation relative z-50 flex items-center justify-center">
+            <div class="text-center">
+                <div class="text-8xl mb-4 animate-bounce">🎉</div>
+                <h2 class="text-5xl font-bold text-white mb-4 bingo-text">БИНГО!</h2>
+                <p class="text-xl text-white mb-6 opacity-90 bingo-message">Вы собрали линию!</p>
+                <button id="bingoWinOk"
+                    class="bg-white text-orange-600 font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:scale-105 transform transition">
+                    Отлично!
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Modal -->
     <div id="notifyModal"
         class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
