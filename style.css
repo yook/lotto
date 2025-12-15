@@ -163,10 +163,15 @@ nav a:hover, nav button:hover {
 
 /* Bingo styles */
 #bingoCard {
-    grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: 1fr;
+    /* use minmax to avoid intrinsic minimums causing overflow */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
     gap: 0.5rem; /* fixed gap between cells */
-}
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow-x: hidden;
+ }
 .bingo-cell {
     background: rgba(99,102,241,0.12);
     border-radius: 0.5rem;
@@ -181,6 +186,7 @@ nav a:hover, nav button:hover {
     aspect-ratio: 1 / 1;
     padding: 0.5rem;
     font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+    min-width: 0; /* prevent long content from forcing width */
 }
 .bingo-cell:focus {
     outline: 2px solid rgba(99,102,241,0.6);
@@ -246,19 +252,23 @@ nav a:hover, nav button:hover {
         margin-bottom: 0.75rem;
     }
 
-    /* Bingo card tighter spacing and fills vertical space */
-    #bingoCard { 
-        gap: 0.25rem; 
-        grid-auto-rows: 1fr;
-        height: calc(100vh - 260px);
-        max-height: 80vh;
+    /* Bingo card tighter spacing and keep square cells on phones */
+    #bingoCard {
+        gap: 0.18rem;
+        grid-auto-rows: minmax(0, 1fr);
+        /* keep grid within viewport on tall phones */
+        max-height: calc(100vh - 260px);
+        overflow: auto;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
     }
-    .bingo-cell { 
-        padding: 0.2rem; 
-        font-size: 0.7rem; 
-        border-radius: 0.35rem; 
-        aspect-ratio: auto;
-        height: 100%;
+    .bingo-cell {
+        padding: 0.35rem;
+        font-size: 0.8rem;
+        border-radius: 0.35rem;
+        aspect-ratio: 1 / 1;
+        min-height: 0;
+        height: auto;
     }
 
     /* Played numbers tiles smaller on phones */
