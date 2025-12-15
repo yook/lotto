@@ -168,7 +168,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (num === "FREE") {
         cell.dataset.number = "";
         const freeLabel = document.createElement("div");
-        freeLabel.className = "text-sm opacity-90 flex items-center justify-center";
+        freeLabel.className =
+          "text-sm opacity-90 flex items-center justify-center";
         freeLabel.innerHTML = '<i data-feather="star" class="free-icon"></i>';
         cell.appendChild(freeLabel);
       } else {
@@ -183,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     updateMarkedCount(marks);
     try {
-      if (typeof feather !== 'undefined') feather.replace();
+      if (typeof feather !== "undefined") feather.replace();
     } catch (e) {}
   }
   function updateMarkedCount(marks) {

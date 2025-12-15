@@ -194,6 +194,25 @@ nav a:hover, nav button:hover {
     font-size: 1rem;
 }
 
+/* Header for B I N G O */
+.bingo-header > div {
+    background: transparent;
+    color: #f8fafc;
+    padding: 0.5rem 0;
+    font-size: 1.05rem;
+}
+
+/* Style free cell */
+.bingo-cell[data-number=""] {
+    background: linear-gradient(90deg, rgba(255,194,0,0.15), rgba(255,140,0,0.12));
+}
+
+.free-icon {
+    width: 36px;
+    height: 36px;
+    color: #ffffff;
+}
+
 /* Responsive adjustments for Bingo card and mobile devices */
     display: flex;
     align-items: center;
