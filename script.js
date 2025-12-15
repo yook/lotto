@@ -3,6 +3,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const currentNumberDisplay = document.getElementById("currentNumber");
   const playerContainer = document.getElementById("playerContainer");
   const audioPlayer = document.getElementById("audioPlayer");
+  // Auto-spin: when song ends and user selected auto mode, trigger spin
+  if (audioPlayer) {
+    audioPlayer.addEventListener('ended', () => {
+      try {
+        const mode = localStorage.getItem('spinMode') || 'manual';
+        if (mode === 'auto') {
+          if (spinBtn && !spinBtn.disabled) {
+            // small delay to allow UI update after track end
+            setTimeout(() => spinBtn.click(), 400);
+          }
+        }
+      } catch (e) {}
+    });
+  }
   const songTitle = document.getElementById("songTitle");
   const playedNumbersContainer = document.getElementById("playedNumbers");
 
@@ -76,27 +90,66 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
   function generateCardNumbers(name, count, needed = 25) {
+    // Generate a standard 75-ball Bingo card (B I N G O columns)
     const seed = xfnv1a(name || "");
     const rnd = mulberry32(seed);
-    const set = new Set();
-    while (set.size < Math.min(needed, count)) {
-      set.add(Math.floor(rnd() * count) + 1);
-      if (set.size >= count) break;
+
+    function pickUnique(start, end, howMany) {
+      const pool = [];
+      for (let i = start; i <= end; i++) pool.push(i);
+      // Fisher-Yates shuffle using seeded rnd
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(rnd() * (i + 1));
+        const tmp = pool[i];
+        pool[i] = pool[j];
+        pool[j] = tmp;
+      }
+      return pool.slice(0, howMany);
     }
-    if (set.size < needed) {
-      for (let i = 1; i <= count && set.size < needed; i++) set.add(i);
+
+    // Columns ranges for 75-ball bingo
+    const colB = pickUnique(1, 15, 5);
+    const colI = pickUnique(16, 30, 5);
+    const colN = pickUnique(31, 45, 4); // center is FREE
+    const colG = pickUnique(46, 60, 5);
+    const colO = pickUnique(61, 75, 5);
+
+    const card = [];
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        if (r === 2 && c === 2) {
+          card.push("FREE");
+          continue;
+        }
+        if (c === 0) card.push(colB[r]);
+        else if (c === 1) card.push(colI[r]);
+        else if (c === 2) card.push(r < 2 ? colN[r] : colN[r - 1]);
+        else if (c === 3) card.push(colG[r]);
+        else if (c === 4) card.push(colO[r]);
+      }
     }
-    return Array.from(set).slice(0, needed);
+    return card;
   }
   function loadMarks(name) {
     const key = `bingo:marks:${name}`;
     const raw = localStorage.getItem(key);
-    if (!raw) return Array(25).fill(false);
+    if (!raw) {
+      const arr = Array(25).fill(false);
+      // center is free and marked
+      arr[12] = true;
+      return arr;
+    }
     try {
       const arr = JSON.parse(raw);
-      if (Array.isArray(arr) && arr.length === 25) return arr.map(Boolean);
+      if (Array.isArray(arr) && arr.length === 25) {
+        const mapped = arr.map(Boolean);
+        mapped[12] = true;
+        return mapped;
+      }
     } catch (e) {}
-    return Array(25).fill(false);
+    const fallback = Array(25).fill(false);
+    fallback[12] = true;
+    return fallback;
   }
   function saveMarks(name, marks) {
     const key = `bingo:marks:${name}`;
@@ -107,13 +160,23 @@ document.addEventListener("DOMContentLoaded", () => {
     bingoCardEl.innerHTML = "";
     cardNumbers.forEach((num, idx) => {
       const cell = document.createElement("div");
-      cell.className =
-        "bingo-cell bingo-number text-center text-white rounded-lg p-2";
+      cell.className = "bingo-cell text-center text-white rounded-lg p-4 flex items-center justify-center flex-col";
       cell.tabIndex = 0;
       cell.setAttribute("role", "gridcell");
       cell.dataset.index = idx;
-      cell.dataset.number = num;
-      cell.textContent = num;
+      if (num === "FREE") {
+        cell.dataset.number = "";
+        const freeLabel = document.createElement("div");
+        freeLabel.className = "text-sm opacity-90";
+        freeLabel.textContent = "FREE";
+        cell.appendChild(freeLabel);
+      } else {
+        cell.dataset.number = num;
+        const numEl = document.createElement("div");
+        numEl.className = "text-xl font-bold";
+        numEl.textContent = num;
+        cell.appendChild(numEl);
+      }
       if (marks[idx]) cell.classList.add("bingo-marked");
       bingoCardEl.appendChild(cell);
     });
@@ -127,16 +190,23 @@ document.addEventListener("DOMContentLoaded", () => {
   function checkBingo(marks) {
     const achieved = [];
 
-    // Check first row (первая горизонталь)
-    if (marks.slice(0, 5).every(Boolean)) achieved.push("row1");
+    // Check all rows
+    for (let r = 0; r < 5; r++) {
+      const offset = r * 5;
+      if (marks.slice(offset, offset + 5).every(Boolean)) achieved.push(`row${r + 1}`);
+    }
 
-    // Check first column (первая вертикаль)
-    if ([0, 1, 2, 3, 4].every((row) => marks[row * 5])) achieved.push("col1");
+    // Check all columns
+    for (let c = 0; c < 5; c++) {
+      const col = [0, 1, 2, 3, 4].map((r) => marks[r * 5 + c]);
+      if (col.every(Boolean)) achieved.push(`col${c + 1}`);
+    }
 
-    // Check first diagonal (первая диагональ - главная)
+    // Check two diagonals
     if ([0, 6, 12, 18, 24].every((i) => marks[i])) achieved.push("diag1");
+    if ([4, 8, 12, 16, 20].every((i) => marks[i])) achieved.push("diag2");
 
-    // Check if all filled (25/25) - check last as it's the final achievement
+    // Full card
     if (marks.every(Boolean)) achieved.push("full");
 
     return achieved;
@@ -192,42 +262,71 @@ document.addEventListener("DOMContentLoaded", () => {
         const cell = e.target.closest(".bingo-cell");
         if (!cell) return;
         const idx = parseInt(cell.dataset.index, 10);
+        // Ignore clicks on the FREE center cell (do not allow unmark or prompt)
+        const cellNumber = cell.dataset.number;
+        if (cellNumber === "" || idx === 12) return;
 
-        // If this cell is already marked, confirm before unmarking
-        if (marks[idx]) {
-          const confirmed = await showConfirm(
-            "Вы уверены, что хотите сбросить отметку?",
-            "Да, сбросить",
-            "Отмена"
-          );
-          if (!confirmed) return;
-          marks[idx] = false;
-          cell.classList.remove("bingo-marked");
-        } else {
-          marks[idx] = true;
-          cell.classList.add("bingo-marked");
-        }
+          // Determine previously achieved types before this click
+          const prevTypes = checkBingo(marks);
 
-        try {
-          saveMarks(activeCardName, marks);
-        } catch (err) {
-          console.warn("Failed saving bingo marks", err);
-        }
-        updateMarkedCount(marks);
-
-        // Check for bingo - only show modal for NEW specific achievements
-        const bingoTypes = checkBingo(marks);
-        if (bingoTypes.length > 0) {
-          const shownKey = `bingo:shown:${activeCardName}`;
-          const shown = JSON.parse(localStorage.getItem(shownKey) || "[]");
-          // Find first achievement that hasn't been shown yet
-          const newType = bingoTypes.find((type) => !shown.includes(type));
-          if (newType) {
-            shown.push(newType);
-            localStorage.setItem(shownKey, JSON.stringify(shown));
-            setTimeout(() => showBingoWin(newType), 300);
+          // If this cell is already marked, confirm before unmarking
+          if (marks[idx]) {
+            const confirmed = await showConfirm(
+              "Вы уверены, что хотите сбросить отметку?",
+              "Да, сбросить",
+              "Отмена"
+            );
+            if (!confirmed) return;
+            marks[idx] = false;
+            cell.classList.remove("bingo-marked");
+          } else {
+            marks[idx] = true;
+            cell.classList.add("bingo-marked");
           }
-        }
+
+          try {
+            saveMarks(activeCardName, marks);
+          } catch (err) {
+            console.warn("Failed saving bingo marks", err);
+          }
+          updateMarkedCount(marks);
+
+          // Check for bingo - find types that are NEW after this click
+          const bingoTypes = checkBingo(marks);
+          const newlyAchieved = bingoTypes.filter((t) => !prevTypes.includes(t));
+          if (newlyAchieved.length > 0) {
+            const shownKey = `bingo:shown:${activeCardName}`;
+            const shownRaw = JSON.parse(localStorage.getItem(shownKey) || "null");
+
+            // Map achievement types to categories: row -> 'row', col -> 'col', diag -> 'diag', full -> 'full'
+            const mapToCategory = (t) => {
+              if (t === 'full') return 'full';
+              if (t.startsWith('row')) return 'row';
+              if (t.startsWith('col')) return 'col';
+              if (t.startsWith('diag')) return 'diag';
+              return t;
+            };
+
+            // Normalize stored value into an object map { row: true, col: true, diag: true, full: true }
+            const shownMap = {};
+            if (shownRaw && typeof shownRaw === 'object' && !Array.isArray(shownRaw)) {
+              // already a map (new format)
+              Object.assign(shownMap, shownRaw);
+            } else if (Array.isArray(shownRaw)) {
+              // legacy array, convert to categories
+              shownRaw.forEach((s) => shownMap[mapToCategory(s)] = true);
+            }
+
+            // Determine newly achieved categories (unique)
+            const newlyCats = Array.from(new Set(newlyAchieved.map(mapToCategory)));
+            // Find first category not yet shown
+            const newCat = newlyCats.find((cat) => !shownMap[cat]);
+            if (newCat) {
+              shownMap[newCat] = true;
+              localStorage.setItem(shownKey, JSON.stringify(shownMap));
+              setTimeout(() => showBingoWin(newCat === 'full' ? 'full' : newCat), 300);
+            }
+          }
       });
     }
 
@@ -504,6 +603,10 @@ document.addEventListener("DOMContentLoaded", () => {
         spinBtn.innerHTML = '<i data-feather="play"></i> Крутить рулетку';
       }
       feather.replace();
+      // After resetting state, navigate back to main page
+      try {
+        window.location.href = "index.html";
+      } catch (e) {}
     });
   if (startGameBtn) {
     startGameBtn.addEventListener("click", () => {
