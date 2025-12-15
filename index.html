@@ -18,6 +18,12 @@
             <button id="startGameBtn"
                 class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-6 px-10 rounded-full shadow-lg hover:scale-105 transform transition">Начать
                 игру</button>
+            <div class="mt-8">
+                <p class="text-sm opacity-80 mb-3">Или отсканируйте QR-код</p>
+                <div class="inline-block p-4 bg-white rounded-2xl shadow-xl">
+                    <img id="qrCode" src="" alt="QR код для игры" class="w-48 h-48">
+                </div>
+            </div>
         </div>
     </main>
 
@@ -26,6 +32,12 @@
     <script src="script.js"></script>
     <script>
         feather.replace();
+        // Generate QR code that links to card.html (no specific ID)
+        const generateQRUrl = () => {
+            const cardUrl = window.location.origin + window.location.pathname.replace('index.html', '') + 'card.html';
+            return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(cardUrl);
+        };
+        document.getElementById('qrCode').src = generateQRUrl();
     </script>
 </body>
 
