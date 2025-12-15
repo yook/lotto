@@ -251,6 +251,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Small confetti salute (used when clicking the FREE star)
+  function showConfetti() {
+    const container = document.createElement("div");
+    container.className =
+      "confetti-container fixed inset-0 pointer-events-none z-50";
+    document.body.appendChild(container);
+    for (let i = 0; i < 40; i++) {
+      const confetti = document.createElement("div");
+      confetti.className = "confetti";
+      confetti.style.left = Math.random() * 100 + "%";
+      confetti.style.animationDelay = Math.random() * 0.5 + "s";
+      confetti.style.backgroundColor = [
+        "#ff6b6b",
+        "#4ecdc4",
+        "#45b7d1",
+        "#f9ca24",
+        "#6c5ce7",
+      ][Math.floor(Math.random() * 5)];
+      container.appendChild(confetti);
+    }
+    setTimeout(() => {
+      try {
+        container.remove();
+      } catch (e) {}
+    }, 3200);
+  }
+
   if (activeCardName) {
     let cardNumbers, marks;
 
@@ -268,9 +295,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const cell = e.target.closest(".bingo-cell");
         if (!cell) return;
         const idx = parseInt(cell.dataset.index, 10);
-        // Ignore clicks on the FREE center cell (do not allow unmark or prompt)
+        // If center FREE cell clicked — show confetti salute
         const cellNumber = cell.dataset.number;
-        if (cellNumber === "" || idx === 12) return;
+        if (idx === 12) {
+          // Animate the free star briefly
+          try {
+            const icon = cell.querySelector(".free-icon");
+            if (icon) {
+              icon.classList.remove("free-animate");
+              // Force reflow to restart animation
+              void icon.offsetWidth;
+              icon.classList.add("free-animate");
+              icon.addEventListener("animationend", function handler() {
+                icon.classList.remove("free-animate");
+                icon.removeEventListener("animationend", handler);
+              });
+            }
+          } catch (e) {}
+          showConfetti();
+          return;
+        }
+        // Ignore other empty-number cells (safety)
+        if (cellNumber === "") return;
 
         // Determine previously achieved types before this click
         const prevTypes = checkBingo(marks);
