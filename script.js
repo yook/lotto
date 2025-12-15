@@ -5,10 +5,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const audioPlayer = document.getElementById("audioPlayer");
   // Auto-spin: when song ends and user selected auto mode, trigger spin
   if (audioPlayer) {
-    audioPlayer.addEventListener('ended', () => {
+    audioPlayer.addEventListener("ended", () => {
       try {
-        const mode = localStorage.getItem('spinMode') || 'manual';
-        if (mode === 'auto') {
+        const mode = localStorage.getItem("spinMode") || "manual";
+        if (mode === "auto") {
           if (spinBtn && !spinBtn.disabled) {
             // small delay to allow UI update after track end
             setTimeout(() => spinBtn.click(), 400);
@@ -160,15 +160,16 @@ document.addEventListener("DOMContentLoaded", () => {
     bingoCardEl.innerHTML = "";
     cardNumbers.forEach((num, idx) => {
       const cell = document.createElement("div");
-      cell.className = "bingo-cell text-center text-white rounded-lg p-4 flex items-center justify-center flex-col";
+      cell.className =
+        "bingo-cell text-center text-white rounded-lg p-4 flex items-center justify-center flex-col";
       cell.tabIndex = 0;
       cell.setAttribute("role", "gridcell");
       cell.dataset.index = idx;
       if (num === "FREE") {
         cell.dataset.number = "";
         const freeLabel = document.createElement("div");
-        freeLabel.className = "text-sm opacity-90";
-        freeLabel.textContent = "FREE";
+        freeLabel.className = "text-sm opacity-90 flex items-center justify-center";
+        freeLabel.innerHTML = '<i data-feather="star" class="free-icon"></i>';
         cell.appendChild(freeLabel);
       } else {
         cell.dataset.number = num;
@@ -181,6 +182,9 @@ document.addEventListener("DOMContentLoaded", () => {
       bingoCardEl.appendChild(cell);
     });
     updateMarkedCount(marks);
+    try {
+      if (typeof feather !== 'undefined') feather.replace();
+    } catch (e) {}
   }
   function updateMarkedCount(marks) {
     const c = marks.filter(Boolean).length;
@@ -193,7 +197,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check all rows
     for (let r = 0; r < 5; r++) {
       const offset = r * 5;
-      if (marks.slice(offset, offset + 5).every(Boolean)) achieved.push(`row${r + 1}`);
+      if (marks.slice(offset, offset + 5).every(Boolean))
+        achieved.push(`row${r + 1}`);
     }
 
     // Check all columns
@@ -266,67 +271,76 @@ document.addEventListener("DOMContentLoaded", () => {
         const cellNumber = cell.dataset.number;
         if (cellNumber === "" || idx === 12) return;
 
-          // Determine previously achieved types before this click
-          const prevTypes = checkBingo(marks);
+        // Determine previously achieved types before this click
+        const prevTypes = checkBingo(marks);
 
-          // If this cell is already marked, confirm before unmarking
-          if (marks[idx]) {
-            const confirmed = await showConfirm(
-              "Вы уверены, что хотите сбросить отметку?",
-              "Да, сбросить",
-              "Отмена"
+        // If this cell is already marked, confirm before unmarking
+        if (marks[idx]) {
+          const confirmed = await showConfirm(
+            "Вы уверены, что хотите сбросить отметку?",
+            "Да, сбросить",
+            "Отмена"
+          );
+          if (!confirmed) return;
+          marks[idx] = false;
+          cell.classList.remove("bingo-marked");
+        } else {
+          marks[idx] = true;
+          cell.classList.add("bingo-marked");
+        }
+
+        try {
+          saveMarks(activeCardName, marks);
+        } catch (err) {
+          console.warn("Failed saving bingo marks", err);
+        }
+        updateMarkedCount(marks);
+
+        // Check for bingo - find types that are NEW after this click
+        const bingoTypes = checkBingo(marks);
+        const newlyAchieved = bingoTypes.filter((t) => !prevTypes.includes(t));
+        if (newlyAchieved.length > 0) {
+          const shownKey = `bingo:shown:${activeCardName}`;
+          const shownRaw = JSON.parse(localStorage.getItem(shownKey) || "null");
+
+          // Map achievement types to categories: row -> 'row', col -> 'col', diag -> 'diag', full -> 'full'
+          const mapToCategory = (t) => {
+            if (t === "full") return "full";
+            if (t.startsWith("row")) return "row";
+            if (t.startsWith("col")) return "col";
+            if (t.startsWith("diag")) return "diag";
+            return t;
+          };
+
+          // Normalize stored value into an object map { row: true, col: true, diag: true, full: true }
+          const shownMap = {};
+          if (
+            shownRaw &&
+            typeof shownRaw === "object" &&
+            !Array.isArray(shownRaw)
+          ) {
+            // already a map (new format)
+            Object.assign(shownMap, shownRaw);
+          } else if (Array.isArray(shownRaw)) {
+            // legacy array, convert to categories
+            shownRaw.forEach((s) => (shownMap[mapToCategory(s)] = true));
+          }
+
+          // Determine newly achieved categories (unique)
+          const newlyCats = Array.from(
+            new Set(newlyAchieved.map(mapToCategory))
+          );
+          // Find first category not yet shown
+          const newCat = newlyCats.find((cat) => !shownMap[cat]);
+          if (newCat) {
+            shownMap[newCat] = true;
+            localStorage.setItem(shownKey, JSON.stringify(shownMap));
+            setTimeout(
+              () => showBingoWin(newCat === "full" ? "full" : newCat),
+              300
             );
-            if (!confirmed) return;
-            marks[idx] = false;
-            cell.classList.remove("bingo-marked");
-          } else {
-            marks[idx] = true;
-            cell.classList.add("bingo-marked");
           }
-
-          try {
-            saveMarks(activeCardName, marks);
-          } catch (err) {
-            console.warn("Failed saving bingo marks", err);
-          }
-          updateMarkedCount(marks);
-
-          // Check for bingo - find types that are NEW after this click
-          const bingoTypes = checkBingo(marks);
-          const newlyAchieved = bingoTypes.filter((t) => !prevTypes.includes(t));
-          if (newlyAchieved.length > 0) {
-            const shownKey = `bingo:shown:${activeCardName}`;
-            const shownRaw = JSON.parse(localStorage.getItem(shownKey) || "null");
-
-            // Map achievement types to categories: row -> 'row', col -> 'col', diag -> 'diag', full -> 'full'
-            const mapToCategory = (t) => {
-              if (t === 'full') return 'full';
-              if (t.startsWith('row')) return 'row';
-              if (t.startsWith('col')) return 'col';
-              if (t.startsWith('diag')) return 'diag';
-              return t;
-            };
-
-            // Normalize stored value into an object map { row: true, col: true, diag: true, full: true }
-            const shownMap = {};
-            if (shownRaw && typeof shownRaw === 'object' && !Array.isArray(shownRaw)) {
-              // already a map (new format)
-              Object.assign(shownMap, shownRaw);
-            } else if (Array.isArray(shownRaw)) {
-              // legacy array, convert to categories
-              shownRaw.forEach((s) => shownMap[mapToCategory(s)] = true);
-            }
-
-            // Determine newly achieved categories (unique)
-            const newlyCats = Array.from(new Set(newlyAchieved.map(mapToCategory)));
-            // Find first category not yet shown
-            const newCat = newlyCats.find((cat) => !shownMap[cat]);
-            if (newCat) {
-              shownMap[newCat] = true;
-              localStorage.setItem(shownKey, JSON.stringify(shownMap));
-              setTimeout(() => showBingoWin(newCat === 'full' ? 'full' : newCat), 300);
-            }
-          }
+        }
       });
     }
 
