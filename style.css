@@ -164,6 +164,7 @@ nav a:hover, nav button:hover {
 /* Bingo styles */
 #bingoCard {
     /* use minmax to avoid intrinsic minimums causing overflow */
+    display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     grid-auto-rows: minmax(0, 1fr);
     gap: 0.5rem; /* fixed gap between cells */
@@ -220,11 +221,6 @@ nav a:hover, nav button:hover {
 }
 
 /* Responsive adjustments for Bingo card and mobile devices */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-}
 
 @media (max-width: 640px) {
     /* Make main card more compact on phones */
