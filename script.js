@@ -292,6 +292,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3200);
   }
 
+  // Supported local audio extensions to probe when file missing
+  const SUPPORTED_AUDIO_EXTS = ["mp3", "m4a", "m4r", "ogg"];
+
+  // Try to find a playable local file starting from `startId`, probing extensions and
+  // advancing to the next id if not found. Returns {id, title, url} or null.
+  async function loadSongWithFallback(startId) {
+    // build candidate id order: startId..songCount, then 1..startId-1
+    const candidates = [];
+    for (let i = startId; i <= songCount; i++) candidates.push(i);
+    for (let i = 1; i < startId; i++) candidates.push(i);
+
+    for (const id of candidates) {
+      for (const ext of SUPPORTED_AUDIO_EXTS) {
+        const url = `songs/${id}.${ext}`;
+        try {
+          const res = await fetch(url, { method: "HEAD" });
+          if (res.ok) {
+            return { id, title: `Трек ${id}`, url };
+          }
+        } catch (e) {
+          // fetch may fail on file:// or due to CORS; ignore and try next
+        }
+      }
+    }
+    return null;
+  }
+
   if (activeCardName) {
     let cardNumbers, marks;
 
@@ -571,7 +598,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function finishSpin(number) {
+  async function finishSpin(number) {
     currentNumber = number;
     playedNumbers.add(number);
     localStorage.setItem(
@@ -599,17 +626,20 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => numberTile.classList.remove("winner"), 1500);
       }
     }
-    let song = musicLibrary.find((t) => t.id === number);
-    // If exact song is missing, fall back to the next available by id, or wrap to first
-    if (!song) {
-      song = musicLibrary.find((t) => t.id > number) || musicLibrary[0] || null;
+    // Attempt to load a local song file matching the number, probing extensions
+    // and falling back to the next available id if needed.
+    let song = null;
+    try {
+      song = await loadSongWithFallback(number);
+    } catch (e) {
+      console.warn('Song fallback loader failed', e);
     }
+
     if (song && audioPlayer && songTitle && playerContainer) {
       playerContainer.style.opacity = 0;
       setTimeout(() => {
         audioPlayer.pause();
         audioPlayer.currentTime = 0;
-        // Play the track that matches the selected roulette number
         audioPlayer.src = song.url;
         audioPlayer.load();
         audioPlayer.setAttribute("autoplay", "");
@@ -627,6 +657,12 @@ document.addEventListener("DOMContentLoaded", () => {
               "Ошибка воспроизведения: нажмите кнопку Play";
           });
       }, 200);
+    } else {
+      // No local files found — show a helpful message and enable controls so user can pick a file
+      try {
+        if (audioPlayer) audioPlayer.controls = true;
+        showNotification('Файл трека не найден. Пожалуйста, добавьте songs/<id>.mp3 или другие форматы.');
+      } catch (e) {}
     }
     updatePlayedNumbers();
     if (spinBtn) {
