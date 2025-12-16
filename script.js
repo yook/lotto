@@ -71,20 +71,23 @@ document.addEventListener("DOMContentLoaded", () => {
   let bingoMarkedCount = document.getElementById("bingoMarkedCount");
 
   const urlParams = new URLSearchParams(window.location.search);
+  const isCardPage = window.location.pathname.endsWith("card.html");
   const cardName = urlParams.get("card");
   let activeCardName = cardName;
-  if (!activeCardName && window.location.pathname.endsWith("card.html")) {
-    const persisted = localStorage.getItem("bingo:autoCardId");
-    if (persisted) activeCardName = persisted;
-    else {
-      const id =
-        "c" +
-        Date.now().toString(36) +
-        "-" +
-        Math.random().toString(36).slice(2, 8);
-      activeCardName = id;
-      localStorage.setItem("bingo:autoCardId", id);
-    }
+
+  // Always generate a fresh card id on the card page so each visit/QR scan gets a unique card
+  if (isCardPage) {
+    const newId =
+      "c" +
+      Date.now().toString(36) +
+      "-" +
+      Math.random().toString(36).slice(2, 8);
+    activeCardName = newId;
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("card", newId);
+      window.history.replaceState(null, "", url.toString());
+    } catch (e) {}
   }
 
   function xfnv1a(str) {
