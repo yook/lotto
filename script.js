@@ -729,6 +729,10 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => numberTile.classList.remove("winner"), 1500);
       }
     }
+    // Celebrate each successful spin result
+    try {
+      showConfetti();
+    } catch (e) {}
     // Attempt to load a local song file matching the number, probing extensions
     // and falling back to the next available id if needed.
     let song = null;
