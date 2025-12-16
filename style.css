@@ -186,7 +186,7 @@ nav a:hover, nav button:hover {
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     aspect-ratio: 1 / 1;
     padding: 0.5rem;
-    font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+    font-size: clamp(1rem, 2vw, 1.35rem);
     min-width: 0; /* prevent long content from forcing width */
 }
 .bingo-cell:focus {
@@ -321,7 +321,7 @@ nav a:hover, nav button:hover {
     }
     .bingo-cell {
         padding: 0.35rem;
-        font-size: 0.8rem;
+        font-size: 1.05rem;
         border-radius: 0.35rem;
         aspect-ratio: 1 / 1;
         min-height: 0;

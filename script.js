@@ -533,6 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         if (confirmed) {
           // Reset roulette state and navigate back to main page
+          clearBingoState();
           playedNumbers.clear();
           localStorage.removeItem("playedNumbers");
           localStorage.removeItem("currentNumber");
@@ -790,6 +791,15 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
+  function clearBingoState() {
+    const keys = Object.keys(localStorage);
+    keys.forEach((k) => {
+      if (k.startsWith("bingo:marks:")) localStorage.removeItem(k);
+      if (k.startsWith("bingo:shown:")) localStorage.removeItem(k);
+    });
+    localStorage.removeItem("bingo:autoCardId");
+  }
+
   // Modal handlers
   const confirmModal = document.getElementById("confirmModal");
   const modalConfirm = document.getElementById("modalConfirm");
@@ -808,6 +818,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (modalConfirm && confirmModal)
     modalConfirm.addEventListener("click", () => {
       confirmModal.classList.add("hidden");
+      clearBingoState();
       playedNumbers.clear();
       localStorage.removeItem("playedNumbers");
       localStorage.removeItem("currentNumber");
@@ -830,11 +841,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (startGameBtn) {
     startGameBtn.addEventListener("click", () => {
       // clear bingo related data and roulette state then navigate to a fresh card
-      const keys = Object.keys(localStorage);
-      keys.forEach((k) => {
-        if (k.startsWith("bingo:marks:")) localStorage.removeItem(k);
-      });
-      localStorage.removeItem("bingo:autoCardId");
+      clearBingoState();
       localStorage.removeItem("playedNumbers");
       localStorage.removeItem("currentNumber");
 
