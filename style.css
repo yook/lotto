@@ -127,6 +127,25 @@ nav a:hover, nav button:hover {
 
 .modal-content {
     animation: modalSlideIn 0.3s ease-out;
+    width: min(480px, 90vw);
+    font-size: 1.05rem;
+}
+
+.modal-content h3 {
+    font-size: 1.35rem;
+}
+
+.modal-content p {
+    font-size: 1.05rem;
+}
+
+@media (max-width: 640px) {
+    .modal-content {
+        width: 90vw;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
 
 /* Keep space for player so showing it doesn't push content below */
