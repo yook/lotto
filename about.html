@@ -1,38 +1,61 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>О проекте - Музыкальная Рулетка</title>
+    <title>Об игре - Музыкальная Рулетка</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 </head>
+
 <body class="bg-gradient-to-br from-indigo-900 to-purple-800 min-h-screen text-white">
-<main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 py-8">
         <div class="max-w-3xl mx-auto bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl">
-            <h1 class="text-4xl font-bold mb-6 flex items-center gap-3">
-                <i data-feather="info"></i> О проекте
-            </h1>
-            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                <a href="index.html"
+                    class="inline-flex items-center gap-2 text-white bg-white bg-opacity-0 hover:bg-opacity-10 px-3 py-2 rounded-lg transition">
+                    <i data-feather="arrow-left"></i>
+                    <span class="opacity-90">Назад</span>
+                </a>
+                <h1 class="text-3xl sm:text-4xl font-bold flex items-center gap-3 m-0">
+                    <i data-feather="info"></i> Об игре
+                </h1>
+            </div>
+
             <div class="space-y-6 text-lg leading-relaxed">
-                <p>Добро пожаловать в "Музыкальную Рулетку" - интерактивный музыкальный плеер, который случайным образом выбирает треки для вас!</p>
-                
-                <p>Просто нажмите кнопку "Крутить рулетку", и система выберет случайный трек из нашей коллекции. Каждый номер соответствует уникальной композиции.</p>
-                
-                <p>Все сыгранные номера сохраняются ниже, так что вы можете отслеживать, какие треки уже были проиграны.</p>
-                
+                <p>Добро пожаловать в "Музыкальную Рулетку" - интерактивный музыкальный плеер, который случайным образом
+                    выбирает треки для вас!</p>
+
                 <div class="bg-white bg-opacity-20 p-4 rounded-xl">
                     <h2 class="text-2xl font-bold mb-3 flex items-center gap-2">
                         <i data-feather="help-circle"></i> Как это работает?
                     </h2>
                     <ul class="space-y-2 list-disc pl-5">
                         <li>Нажмите кнопку "Крутить рулетку"</li>
-                        <li>Система случайно выберет число от 1 до 100</li>
+                        <li>Система случайно выберет число из доступного диапазона</li>
                         <li>Каждое число соответствует уникальному треку</li>
                         <li>Трек автоматически начнет играть</li>
                         <li>Сыгранные номера сохраняются в списке</li>
                     </ul>
+                </div>
+
+                <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+                    <h2 class="text-2xl font-bold mb-3 flex items-center gap-2">
+                        <i data-feather="list"></i> Правила игры
+                    </h2>
+                    <ol class="space-y-3 list-decimal pl-6">
+                        <li>Ведущий открывает страницу ведущего и нажимает «Крутить рулетку», чтобы получить очередной
+                            номер трека.</li>
+                        <li>Игроки открывают карточку по QR-коду; при входе автоматически создаётся бинго-карта из 75
+                            чисел с отмеченной центральной ячейкой FREE.</li>
+                        <li>После каждого выпавшего номера игроки отмечают его на своей карте; номер больше не
+                            повторится в текущей игре.</li>
+                        <li>Победа засчитывается за любую заполненную линию: строка, столбец, диагональ или полностью
+                            закрытая карта.</li>
+                        <li>Кнопка «Новая игра» очищает историю номеров — можно начинать следующий раунд.</li>
+                    </ol>
                 </div>
             </div>
         </div>
@@ -43,4 +66,5 @@
     </script>
     <script src="script.js"></script>
 </body>
+
 </html>

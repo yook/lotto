@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Configuration: maximum number of songs in the library
   // Change this value to adjust the roulette size (can still be overridden by localStorage 'songCount')
-  const DEFAULT_SONG_COUNT = 70;
+  const DEFAULT_SONG_COUNT = 75;
 
   let playedNumbers = new Set();
   let currentNumber = null;
@@ -296,23 +296,101 @@ document.addEventListener("DOMContentLoaded", () => {
   const SUPPORTED_AUDIO_EXTS = ["mp3", "m4a", "m4r", "ogg"];
 
   // Try to find a playable local file starting from `startId`, probing extensions and
-  // advancing to the next id if not found. Returns {id, title, url} or null.
+  // advancing to the next id if not found. Uses `HEAD` requests when running on http(s),
+  // but falls back to creating a temporary Audio element when running from file:// or
+  // when fetch is blocked by CORS (origin 'null'). Returns {id, title, url} or null.
+  function probeAudio(url, timeout = 1500) {
+    return new Promise((resolve) => {
+      try {
+        const a = new Audio();
+        let settled = false;
+        const clean = () => {
+          a.src = "";
+          a.removeAttribute("src");
+          a.load && a.load();
+        };
+        const onOk = () => {
+          if (settled) return;
+          settled = true;
+          clean();
+          resolve(true);
+        };
+        const onErr = () => {
+          if (settled) return;
+          settled = true;
+          clean();
+          resolve(false);
+        };
+        const timer = setTimeout(() => onErr(), timeout);
+        a.preload = "metadata";
+        a.addEventListener(
+          "loadedmetadata",
+          () => {
+            clearTimeout(timer);
+            onOk();
+          },
+          { once: true }
+        );
+        a.addEventListener(
+          "canplaythrough",
+          () => {
+            clearTimeout(timer);
+            onOk();
+          },
+          { once: true }
+        );
+        a.addEventListener(
+          "error",
+          () => {
+            clearTimeout(timer);
+            onErr();
+          },
+          { once: true }
+        );
+        // Assign src last to start load
+        a.src = url;
+        // Some browsers won't start loading until play is attempted; loadedmetadata still fires in many cases.
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  }
+
   async function loadSongWithFallback(startId) {
     // build candidate id order: startId..songCount, then 1..startId-1
     const candidates = [];
     for (let i = startId; i <= songCount; i++) candidates.push(i);
     for (let i = 1; i < startId; i++) candidates.push(i);
 
+    const isFileProtocol =
+      typeof window !== "undefined" &&
+      window.location &&
+      window.location.protocol === "file:";
+    const originNull =
+      typeof window !== "undefined" &&
+      window.location &&
+      (window.location.origin === "null" || !window.location.origin);
+    const useProbeAudio = isFileProtocol || originNull;
+
     for (const id of candidates) {
       for (const ext of SUPPORTED_AUDIO_EXTS) {
         const url = `songs/${id}.${ext}`;
-        try {
-          const res = await fetch(url, { method: "HEAD" });
-          if (res.ok) {
-            return { id, title: `Трек ${id}`, url };
+        if (useProbeAudio) {
+          try {
+            const ok = await probeAudio(url);
+            if (ok) return { id, title: `Трек ${id}`, url };
+          } catch (e) {
+            // ignore and try next
           }
-        } catch (e) {
-          // fetch may fail on file:// or due to CORS; ignore and try next
+        } else {
+          try {
+            const res = await fetch(url, { method: "HEAD" });
+            if (res.ok) {
+              return { id, title: `Трек ${id}`, url };
+            }
+          } catch (e) {
+            // fetch may fail due to CORS; in that case fall back to probeAudio on next iterations
+          }
         }
       }
     }
@@ -446,11 +524,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Spin wiring
   if (spinBtn) {
-    spinBtn.addEventListener("click", () => {
+    spinBtn.addEventListener("click", async () => {
       if (playedNumbers.size === songCount) {
-        alert(
-          "Все номера уже были сыграны! Обновите страницу, чтобы начать заново."
+        const confirmed = await showConfirm(
+          "Все номера уже были сыграны! Начать новую игру?",
+          "Новая игра",
+          "Отмена"
         );
+        if (confirmed) {
+          // Reset roulette state and navigate back to main page
+          playedNumbers.clear();
+          localStorage.removeItem("playedNumbers");
+          localStorage.removeItem("currentNumber");
+          updatePlayedNumbers();
+          if (currentNumberDisplay) {
+            currentNumberDisplay.textContent = "?";
+            currentNumberDisplay.classList.add("animate-pulse");
+          }
+          if (playerContainer) playerContainer.classList.add("player-hidden");
+          if (spinBtn) {
+            spinBtn.disabled = false;
+            spinBtn.innerHTML = '<i data-feather="play"></i> Крутить рулетку';
+          }
+          feather.replace();
+          try {
+            window.location.href = "index.html";
+          } catch (e) {}
+        }
         return;
       }
       spinBtn.disabled = true;
@@ -536,7 +636,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 max-w-md mx-4 shadow-2xl modal-content">
             <div class="text-center mb-6">
               <i data-feather="alert-circle" class="mx-auto mb-4" style="width: 48px; height: 48px; color: #fbbf24;"></i>
-              <h3 id="confirmTitle" class="text-2xl font-bold mb-2">Подтверждение</h3>
+              <h3 id="confirmTitle" class="text-2xl font-bold mb-2"></h3>
               <p id="confirmMessage" class="text-lg opacity-90"></p>
             </div>
             <div class="flex gap-4 justify-center">
@@ -552,6 +652,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const msgEl = modal.querySelector("#confirmMessage");
       if (msgEl) msgEl.textContent = message;
+      const titleEl = modal.querySelector("#confirmTitle");
+      if (titleEl) titleEl.textContent = "";
       const ok = modal.querySelector("#confirmOk");
       const cancel = modal.querySelector("#confirmCancel");
       if (ok) ok.textContent = yesText;
@@ -632,7 +734,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       song = await loadSongWithFallback(number);
     } catch (e) {
-      console.warn('Song fallback loader failed', e);
+      console.warn("Song fallback loader failed", e);
     }
 
     if (song && audioPlayer && songTitle && playerContainer) {
@@ -661,7 +763,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // No local files found — show a helpful message and enable controls so user can pick a file
       try {
         if (audioPlayer) audioPlayer.controls = true;
-        showNotification('Файл трека не найден. Пожалуйста, добавьте songs/<id>.mp3 или другие форматы.');
+        showNotification(
+          "Файл трека не найден. Пожалуйста, добавьте songs/<id>.mp3 или другие форматы."
+        );
       } catch (e) {}
     }
     updatePlayedNumbers();
