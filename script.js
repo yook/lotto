@@ -20,10 +20,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const songTitle = document.getElementById("songTitle");
   const playedNumbersContainer = document.getElementById("playedNumbers");
 
+  // Configuration: maximum number of songs in the library
+  // Change this value to adjust the roulette size (can still be overridden by localStorage 'songCount')
+  const DEFAULT_SONG_COUNT = 19;
+
   let playedNumbers = new Set();
   let currentNumber = null;
 
-  const songCount = parseInt(localStorage.getItem("songCount")) || 100;
+  const songCount =
+    parseInt(localStorage.getItem("songCount")) || DEFAULT_SONG_COUNT;
   const musicLibrary = Array.from({ length: songCount }, (_, i) => ({
     id: i + 1,
     title: `Трек ${i + 1}`,
@@ -35,7 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Restore state
   try {
     const saved = localStorage.getItem("playedNumbers");
-    if (saved) JSON.parse(saved).forEach((n) => playedNumbers.add(parseInt(n, 10)));
+    if (saved)
+      JSON.parse(saved).forEach((n) => playedNumbers.add(parseInt(n, 10)));
   } catch (e) {}
   // Render any restored played numbers into the UI
   try {
