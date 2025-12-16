@@ -726,11 +726,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 200);
     }
     if (playedNumbersContainer) {
-      const numberTile = playedNumbersContainer.lastChild;
-      if (numberTile) {
-        numberTile.classList.add("winner");
-        setTimeout(() => numberTile.classList.remove("winner"), 1500);
-      }
+      // Highlight the freshly drawn number (after render we re-apply winner below)
     }
     // Celebrate each successful spin result
     try {
@@ -777,6 +773,18 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (e) {}
     }
     updatePlayedNumbers();
+    // Highlight the tile that matches the freshly drawn number
+    try {
+      if (playedNumbersContainer) {
+        const tiles = Array.from(playedNumbersContainer.children);
+        const target = tiles.find((el) => el.textContent === String(number));
+        if (target) {
+          target.classList.add("winner");
+          setTimeout(() => target.classList.remove("winner"), 1500);
+        }
+      }
+    } catch (e) {}
+
     if (spinBtn) {
       spinBtn.disabled = false;
       spinBtn.innerHTML = '<i data-feather="play"></i> Крутить снова';
