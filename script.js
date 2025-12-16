@@ -35,7 +35,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Restore state
   try {
     const saved = localStorage.getItem("playedNumbers");
-    if (saved) JSON.parse(saved).forEach((n) => playedNumbers.add(n));
+    if (saved) JSON.parse(saved).forEach((n) => playedNumbers.add(parseInt(n, 10)));
+  } catch (e) {}
+  // Render any restored played numbers into the UI
+  try {
+    updatePlayedNumbers();
   } catch (e) {}
   const savedCurrentNumber = localStorage.getItem("currentNumber");
   if (savedCurrentNumber) {
