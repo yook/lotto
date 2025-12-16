@@ -22,19 +22,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Configuration: maximum number of songs in the library
   // Change this value to adjust the roulette size (can still be overridden by localStorage 'songCount')
-  const DEFAULT_SONG_COUNT = 19;
+  const DEFAULT_SONG_COUNT = 70;
 
   let playedNumbers = new Set();
   let currentNumber = null;
 
-  const songCount =
-    parseInt(localStorage.getItem("songCount")) || DEFAULT_SONG_COUNT;
+  // Determine effective song count (allow local override but clamp to DEFAULT_SONG_COUNT)
+  let songCount = DEFAULT_SONG_COUNT;
+  try {
+    const stored = parseInt(localStorage.getItem("songCount"), 10);
+    if (!isNaN(stored) && stored > 0)
+      songCount = Math.min(stored, DEFAULT_SONG_COUNT);
+  } catch (e) {}
   const musicLibrary = Array.from({ length: songCount }, (_, i) => ({
     id: i + 1,
     title: `Трек ${i + 1}`,
-    url: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${
-      (i % 10) + 1
-    }.mp3`,
+    // Prefer local songs directory; files should be named 1.mp3, 2.mp3, ...
+    url: `songs/${i + 1}.mp3`,
   }));
 
   // Restore state
@@ -595,14 +599,18 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => numberTile.classList.remove("winner"), 1500);
       }
     }
-    const song = musicLibrary.find((t) => t.id === number);
+    let song = musicLibrary.find((t) => t.id === number);
+    // If exact song is missing, fall back to the next available by id, or wrap to first
+    if (!song) {
+      song = musicLibrary.find((t) => t.id > number) || musicLibrary[0] || null;
+    }
     if (song && audioPlayer && songTitle && playerContainer) {
       playerContainer.style.opacity = 0;
       setTimeout(() => {
         audioPlayer.pause();
         audioPlayer.currentTime = 0;
-        audioPlayer.src =
-          "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+        // Play the track that matches the selected roulette number
+        audioPlayer.src = song.url;
         audioPlayer.load();
         audioPlayer.setAttribute("autoplay", "");
         songTitle.textContent = song.title;
