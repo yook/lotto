@@ -33,6 +33,11 @@
 
                     <div class="space-y-4">
                         <div>
+                            <label class="block text-lg mb-2">Название игры:</label>
+                            <input id="gameTitleInput" type="text" placeholder="Музыкальная Рулетка"
+                                class="w-full bg-white bg-opacity-5 rounded-lg px-3 py-2 text-white" />
+                        </div>
+                        <div>
                             <label class="block text-lg mb-2">Режим рулетки:</label>
                             <div class="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
                                 <label
@@ -67,17 +72,23 @@
         document.addEventListener('DOMContentLoaded', () => {
             const saveBtn = document.getElementById('saveSettings');
 
-            // Load spin mode
+            // Load saved settings
             const savedMode = localStorage.getItem('spinMode') || 'manual';
             const manual = document.getElementById('spinManual');
             const auto = document.getElementById('spinAuto');
             if (manual) manual.checked = savedMode === 'manual';
             if (auto) auto.checked = savedMode === 'auto';
 
+            // Load game title
+            const titleInput = document.getElementById('gameTitleInput');
+            const savedTitle = localStorage.getItem('gameTitle') || '';
+            if (titleInput) titleInput.value = savedTitle;
+
             // Save settings
             saveBtn.addEventListener('click', () => {
                 const selectedMode = document.querySelector('input[name="spinMode"]:checked');
                 if (selectedMode) localStorage.setItem('spinMode', selectedMode.value);
+                if (titleInput) localStorage.setItem('gameTitle', titleInput.value || '');
 
                 // Show success notification
                 const notification = document.createElement('div');

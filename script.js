@@ -17,8 +17,45 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (e) {}
     });
   }
+  // Santa / holiday emojis (show while music is playing)
+  const santaEl = document.getElementById("santa");
+  const santaEmojis = santaEl
+    ? Array.from(santaEl.querySelectorAll(".santa-emoji"))
+    : [];
+  if (audioPlayer) {
+    audioPlayer.addEventListener("play", () => {
+      try {
+        if (santaEl) santaEl.classList.remove("hidden");
+        if (santaEmojis.length) {
+          // small timeout so CSS has time to apply
+          setTimeout(
+            () => santaEmojis.forEach((el) => el.classList.add("dancing")),
+            20
+          );
+        }
+      } catch (e) {}
+    });
+    const hideSanta = () => {
+      try {
+        santaEmojis.forEach((el) => el.classList.remove("dancing"));
+        if (santaEl) santaEl.classList.add("hidden");
+      } catch (e) {}
+    };
+    audioPlayer.addEventListener("pause", hideSanta);
+    audioPlayer.addEventListener("ended", hideSanta);
+  }
   const songTitle = document.getElementById("songTitle");
   const playedNumbersContainer = document.getElementById("playedNumbers");
+  const gameTitleDisplay = document.getElementById("gameTitleDisplay");
+  const playedNumbersTitleText = document.getElementById(
+    "playedNumbersTitleText"
+  );
+
+  // Show saved game title (from settings) under the main heading
+  try {
+    const savedGameTitle = localStorage.getItem("gameTitle") || "";
+    if (gameTitleDisplay) gameTitleDisplay.textContent = savedGameTitle;
+  } catch (e) {}
 
   // Configuration: maximum number of songs in the library
   // Change this value to adjust the roulette size (can still be overridden by localStorage 'songCount')
@@ -27,13 +64,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let playedNumbers = new Set();
   let currentNumber = null;
 
-  // Determine effective song count (allow local override but clamp to DEFAULT_SONG_COUNT)
+  // Use the default song count unconditionally
   let songCount = DEFAULT_SONG_COUNT;
-  try {
-    const stored = parseInt(localStorage.getItem("songCount"), 10);
-    if (!isNaN(stored) && stored > 0)
-      songCount = Math.min(stored, DEFAULT_SONG_COUNT);
-  } catch (e) {}
   const musicLibrary = Array.from({ length: songCount }, (_, i) => ({
     id: i + 1,
     title: `Трек ${i + 1}`,
@@ -74,20 +106,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const isCardPage = window.location.pathname.endsWith("card.html");
   const cardName = urlParams.get("card");
   let activeCardName = cardName;
-
-  // Always generate a fresh card id on the card page so each visit/QR scan gets a unique card
+  // If we're on the card page, respect an existing ?card param.
+  // Only generate and inject a new card id when the param is absent.
   if (isCardPage) {
-    const newId =
-      "c" +
-      Date.now().toString(36) +
-      "-" +
-      Math.random().toString(36).slice(2, 8);
-    activeCardName = newId;
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set("card", newId);
-      window.history.replaceState(null, "", url.toString());
-    } catch (e) {}
+    if (cardName && cardName.trim() !== "") {
+      activeCardName = cardName;
+    } else {
+      const newId =
+        "c" +
+        Date.now().toString(36) +
+        "-" +
+        Math.random().toString(36).slice(2, 8);
+      activeCardName = newId;
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("card", newId);
+        window.history.replaceState(null, "", url.toString());
+      } catch (e) {}
+    }
   }
 
   function xfnv1a(str) {
@@ -561,6 +597,7 @@ document.addEventListener("DOMContentLoaded", () => {
       spinBtn.innerHTML =
         '<i data-feather="loader" class="animate-spin"></i> Крутим...';
       feather.replace();
+      // swivel sound disabled
       let spins = 0;
       const totalSpins = 30;
       let currentInterval = 20;
@@ -804,6 +841,12 @@ document.addEventListener("DOMContentLoaded", () => {
         numberTile.textContent = num;
         playedNumbersContainer.appendChild(numberTile);
       });
+    try {
+      // Update title counter n/m
+      if (playedNumbersTitleText) {
+        playedNumbersTitleText.textContent = `Выпавшие числа ${playedNumbers.size} из ${DEFAULT_SONG_COUNT}`;
+      }
+    } catch (e) {}
   }
 
   function clearBingoState() {
@@ -853,24 +896,8 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "index.html";
       } catch (e) {}
     });
-  if (startGameBtn) {
-    startGameBtn.addEventListener("click", () => {
-      // clear bingo related data and roulette state then navigate to a fresh card
-      clearBingoState();
-      localStorage.removeItem("playedNumbers");
-      localStorage.removeItem("currentNumber");
-
-      const id =
-        "c" +
-        Date.now().toString(36) +
-        "-" +
-        Math.random().toString(36).slice(2, 8);
-      // persist the auto id so card.html can pick it up without ?card param if desired
-      localStorage.setItem("bingo:autoCardId", id);
-      // navigate to card with explicit id to force new card
-      window.location.href = "card.html?card=" + encodeURIComponent(id);
-    });
-  }
+  // `startGameBtn` is a simple link to `game.html` now; the automatic card creation
+  // behavior has been removed so clicks follow the anchor href.
   if (confirmModal)
     confirmModal.addEventListener("click", (e) => {
       if (e.target === confirmModal) confirmModal.classList.add("hidden");

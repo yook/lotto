@@ -49,6 +49,7 @@
 }
 .number-tile.winner {
     animation: winnerPulse 0.5s ease-in-out 3;
+    z-index: 30;
 }
 
 @keyframes winnerPulse {
@@ -61,10 +62,12 @@
     width: 3rem;
     height: 3rem;
     font-size: 0.95rem;
+    position: relative;
 }
 .number-tile:hover {
     transform: scale(1.1);
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    z-index: 40;
 }
 nav a, nav button {
     transition: all 0.2s ease;
@@ -145,6 +148,16 @@ nav a:hover, nav button:hover {
         max-width: 480px;
         margin-left: auto;
         margin-right: auto;
+    }
+}
+
+/* Make played-numbers use fixed column width on md+ so horizontal gaps match vertical gaps */
+@media (min-width: 768px) {
+    #playedNumbers.played-fixed-cols {
+        display: grid !important;
+        grid-template-columns: repeat(10, 3rem) !important;
+        justify-items: center;
+        gap: 0.5rem; /* match gap-2 (0.5rem) */
     }
 }
 
@@ -393,6 +406,55 @@ h1::marker {
     height: 10px;
     top: -10px;
     animation: confetti-fall 3s linear forwards;
+}
+
+/* Dancing Santa */
+.santa-emoji {
+    font-size: 3.5rem;
+    line-height: 1;
+    display: inline-block;
+    transform-origin: 50% 60%;
+    will-change: transform;
+}
+@keyframes santaDance {
+    0% { transform: translateY(0) rotate(-6deg); }
+    25% { transform: translateY(-8px) rotate(6deg); }
+    50% { transform: translateY(0) rotate(-6deg); }
+    75% { transform: translateY(-6px) rotate(4deg); }
+    100% { transform: translateY(0) rotate(-6deg); }
+}
+.santa-emoji.dancing {
+    animation: santaDance 0.9s ease-in-out infinite;
+}
+.santa-emoji.party {
+    animation: santaDance 0.6s ease-in-out infinite;
+}
+
+.santa-emoji {
+    text-shadow: 0 6px 20px rgba(0,0,0,0.35);
+}
+
+/* Stagger small animation delays for multiple emojis */
+#santa .santa-emoji:nth-child(1).dancing { animation-delay: 0s; }
+#santa .santa-emoji:nth-child(2).dancing { animation-delay: 0.06s; }
+#santa .santa-emoji:nth-child(3).dancing { animation-delay: 0.12s; }
+#santa .santa-emoji:nth-child(4).dancing { animation-delay: 0.18s; }
+#santa .santa-emoji:nth-child(5).dancing { animation-delay: 0.24s; }
+#santa .santa-emoji:nth-child(6).dancing { animation-delay: 0.30s; }
+
+/* Image sizing for single GIF replacement */
+#santa .santa-emoji {
+    width: 288px; /* 3x of 96px */
+    height: 288px;
+    object-fit: contain;
+    display: inline-block;
+}
+
+@media (max-width: 640px) {
+    #santa .santa-emoji {
+        width: 192px; /* 3x of 64px */
+        height: 192px;
+    }
 }
 
 @keyframes confetti-fall {
