@@ -48,14 +48,13 @@
         // Generate a unique card id and embed it into the QR/link so each scan creates a fresh card
         const genCardId = () => 'c' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
         const generateQRUrl = () => {
-            const id = genCardId();
+            // Point QR to plain card.html (no ?card) so each open generates a new unique card.
             const base = window.location.origin + window.location.pathname.replace('index.html', '') + 'card.html';
-            const target = `${base}?card=${encodeURIComponent(id)}`;
             // Use larger size, margin and medium error correction for better phone scanning
-            const params = new URLSearchParams({ size: '400x400', data: target, margin: '10', ecc: 'M' });
-            // also update anchor href to match the QR target
+            const params = new URLSearchParams({ size: '400x400', data: base, margin: '10', ecc: 'M' });
+            // update anchor href to the base card page (each visit will get a new card)
             const qrLink = document.getElementById('qrLink');
-            if (qrLink) qrLink.href = target;
+            if (qrLink) qrLink.href = base;
             return 'https://api.qrserver.com/v1/create-qr-code/?' + params.toString();
         };
         const qr = document.getElementById('qrCode');
