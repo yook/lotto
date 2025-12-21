@@ -228,6 +228,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const colG = pickUnique(46, 60, 5);
     const colO = pickUnique(61, 75, 5);
 
+    // Ensure numbers in each column are in ascending order (top -> bottom)
+    colB.sort((a, b) => a - b);
+    colI.sort((a, b) => a - b);
+    colN.sort((a, b) => a - b);
+    colG.sort((a, b) => a - b);
+    colO.sort((a, b) => a - b);
+
     const card = [];
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
