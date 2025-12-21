@@ -45,6 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
     audioPlayer.addEventListener("ended", hideSanta);
   }
   const songTitle = document.getElementById("songTitle");
+  const nowPlayingEl = document.getElementById("nowPlaying");
   const playedNumbersContainer = document.getElementById("playedNumbers");
   const gameTitleDisplay = document.getElementById("gameTitleDisplay");
   const playedNumbersTitleText = document.getElementById(
@@ -66,12 +67,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Use the default song count unconditionally
   let songCount = DEFAULT_SONG_COUNT;
+
+  // songsMeta will hold parsed metadata from songs.json (if available)
+  // keyed by numeric id: { title, artist }
+  let songsMeta = {};
+
+  // Build a fallback music library (used until/if songs.json is loaded)
   const musicLibrary = Array.from({ length: songCount }, (_, i) => ({
     id: i + 1,
     title: `Трек ${i + 1}`,
+    artist: "",
     // Prefer local songs directory; files should be named 1.mp3, 2.mp3, ...
     url: `songs/${i + 1}.mp3`,
   }));
+
+  // Try to fetch songs.json and merge metadata into musicLibrary
+  (async function loadSongsJson() {
+    try {
+      // First, allow an embed via a global variable for file:// workflows.
+      const globalData =
+        (typeof window !== "undefined" &&
+          (window.SONGS_JSON || window.songsJson || window.__SONGS_JSON__)) ||
+        null;
+      let data = null;
+      if (globalData) {
+        data = globalData;
+      } else {
+        const res = await fetch("songs.json", { cache: "no-store" });
+        if (!res.ok) return;
+        data = await res.json();
+      }
+
+      if (!Array.isArray(data)) return;
+      data.forEach((entry) => {
+        const id = Number(entry["Номер"] || entry["number"] || entry.id);
+        if (!id || id < 1 || id > songCount) return;
+        const title = entry["Название"] || entry["title"] || "";
+        const artist = entry["Исполнитель"] || entry["artist"] || "";
+        songsMeta[id] = { title: title || `Трек ${id}`, artist: artist || "" };
+        // apply to musicLibrary if present
+        const idx = id - 1;
+        if (musicLibrary[idx]) {
+          musicLibrary[idx].title = songsMeta[id].title;
+          musicLibrary[idx].artist = songsMeta[id].artist;
+        }
+      });
+
+      // If we already had a currentNumber loaded earlier, update the shown title
+      if (currentNumber && songTitle) {
+        const meta = songsMeta[currentNumber];
+        if (meta) {
+          songTitle.textContent = meta.artist
+            ? `${meta.title} — ${meta.artist}`
+            : meta.title;
+        }
+      }
+    } catch (e) {
+      // ignore fetch errors (e.g., file:// environment)
+    }
+  })();
 
   // Restore state
   try {
@@ -92,7 +146,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const song = musicLibrary.find((t) => t.id === currentNumber);
     if (song) {
-      if (songTitle) songTitle.textContent = song.title;
+      const display = song.artist
+        ? `${song.title} — ${song.artist}`
+        : song.title;
+      if (nowPlayingEl) nowPlayingEl.textContent = display;
+      if (songTitle) songTitle.textContent = "";
       if (audioPlayer) audioPlayer.src = song.url;
       if (playerContainer) playerContainer.classList.remove("player-hidden");
     }
@@ -417,7 +475,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (useProbeAudio) {
           try {
             const ok = await probeAudio(url);
-            if (ok) return { id, title: `Трек ${id}`, url };
+            if (ok) {
+              const meta = songsMeta[id] || {};
+              return {
+                id,
+                title: meta.title || `Трек ${id}`,
+                artist: meta.artist || "",
+                url,
+              };
+            }
           } catch (e) {
             // ignore and try next
           }
@@ -425,7 +491,13 @@ document.addEventListener("DOMContentLoaded", () => {
           try {
             const res = await fetch(url, { method: "HEAD" });
             if (res.ok) {
-              return { id, title: `Трек ${id}`, url };
+              const meta = songsMeta[id] || {};
+              return {
+                id,
+                title: meta.title || `Трек ${id}`,
+                artist: meta.artist || "",
+                url,
+              };
             }
           } catch (e) {
             // fetch may fail due to CORS; in that case fall back to probeAudio on next iterations
@@ -786,7 +858,11 @@ document.addEventListener("DOMContentLoaded", () => {
         audioPlayer.src = song.url;
         audioPlayer.load();
         audioPlayer.setAttribute("autoplay", "");
-        songTitle.textContent = song.title;
+        const display = song.artist
+          ? `${song.title} — ${song.artist}`
+          : song.title;
+        if (nowPlayingEl) nowPlayingEl.textContent = display;
+        if (songTitle) songTitle.textContent = "";
         playerContainer.classList.remove("player-hidden");
         playerContainer.style.opacity = 1;
         playerContainer.style.transition =
@@ -796,8 +872,10 @@ document.addEventListener("DOMContentLoaded", () => {
           playPromise.catch((err) => {
             console.error("Playback failed:", err);
             audioPlayer.controls = true;
-            songTitle.textContent =
-              "Ошибка воспроизведения: нажмите кнопку Play";
+            if (nowPlayingEl)
+              nowPlayingEl.textContent =
+                "Ошибка воспроизведения: нажмите кнопку Play";
+            if (songTitle) songTitle.textContent = "";
           });
       }, 200);
     } else {
