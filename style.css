@@ -241,8 +241,9 @@ nav a:hover, nav button:hover {
     font-size: 1.05rem;
 }
 
-/* Style free cell */
-.bingo-cell[data-number=""] {
+/* Style free cell — only apply this special styling when the cell is NOT marked.
+   If the free cell has the `.bingo-marked` class it will inherit the marked style. */
+.bingo-cell[data-number=""]:not(.bingo-marked) {
     background: linear-gradient(90deg, rgba(255,194,0,0.15), rgba(255,140,0,0.12));
 }
 
