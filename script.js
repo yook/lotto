@@ -179,7 +179,10 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const url = new URL(window.location.href);
         url.searchParams.set("card", newId);
-        window.history.replaceState(null, "", url.toString());
+        // Redirect to a unique URL so each QR/open creates its own persistent card.
+        // Use replace to avoid creating an extra history entry.
+        window.location.replace(url.toString());
+        return; // stop further initialization since we'll reload with the param
       } catch (e) {}
     }
   }
