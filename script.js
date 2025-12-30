@@ -823,6 +823,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  async function tryPlay(audioPlayer, attempts = 3) {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        await audioPlayer.play();
+        return true; // success
+      } catch (err) {
+        console.error(`Playback attempt ${i + 1} failed:`, err);
+        if (i < attempts - 1) {
+          // wait a bit before retry
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    }
+    return false; // failed
+  }
+
   async function finishSpin(number) {
     currentNumber = number;
     playedNumbers.add(number);
@@ -877,16 +893,15 @@ document.addEventListener("DOMContentLoaded", () => {
         playerContainer.style.opacity = 1;
         playerContainer.style.transition =
           "opacity 0.5s ease, height 0.3s ease";
-        const playPromise = audioPlayer.play();
-        if (playPromise !== undefined)
-          playPromise.catch((err) => {
-            console.error("Playback failed:", err);
-            audioPlayer.controls = true;
-            if (nowPlayingEl)
-              nowPlayingEl.textContent =
-                "Ошибка воспроизведения: нажмите кнопку Play";
-            if (songTitle) songTitle.textContent = "";
-          });
+        const success = await tryPlay(audioPlayer);
+        if (!success) {
+          // Перейти к следующей песне без сообщения
+          setTimeout(() => {
+            if (spinBtn && !spinBtn.disabled) {
+              spinBtn.click();
+            }
+          }, 1000);
+        }
       }, 200);
     } else {
       // No local files found — show a helpful message and enable controls so user can pick a file
