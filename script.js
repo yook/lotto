@@ -905,6 +905,14 @@ document.addEventListener("DOMContentLoaded", () => {
               "opacity 0.5s ease, height 0.3s ease";
             tryPlay(audioPlayer).then((success) => {
               if (!success) {
+                // Log the failed song number and title
+                try {
+                  console.warn(
+                    `Не удалось воспроизвести трек: #${song.id} — ${
+                      song.title
+                    }${song.artist ? " — " + song.artist : ""}`
+                  );
+                } catch (e) {}
                 // Перейти к следующей песне без сообщения
                 setTimeout(() => {
                   if (spinBtn && !spinBtn.disabled) {
