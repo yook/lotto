@@ -267,6 +267,10 @@ nav a:hover, nav button:hover {
     outline: 2px solid rgba(99,102,241,0.6);
 }
 .bingo-cell:hover { transform: translateY(-3px); }
+
+.bingo-cell:active, .bingo-cell:focus {
+    transform: none !important;
+}
 .bingo-marked {
     background: linear-gradient(90deg, rgba(99,102,241,0.9), rgba(139,92,246,0.9));
     box-shadow: 0 6px 18px rgba(99,102,241,0.18);
