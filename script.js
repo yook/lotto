@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Ensure bingoCardEl and bingoMarkedCount are defined globally for all pages
+  const bingoCardEl = document.getElementById("bingoCard");
+  const bingoMarkedCount = document.getElementById("bingoMarkedCount");
   const spinBtn = document.getElementById("spinBtn");
   const currentNumberDisplay = document.getElementById("currentNumber");
   const playerContainer = document.getElementById("playerContainer");
@@ -62,8 +65,20 @@ document.addEventListener("DOMContentLoaded", () => {
   // Change this value to adjust the roulette size (can still be overridden by localStorage 'songCount')
   const DEFAULT_SONG_COUNT = 75;
 
+  // Restore playedNumbers and currentNumber from localStorage
   let playedNumbers = new Set();
   let currentNumber = null;
+  try {
+    const saved = localStorage.getItem("playedNumbers");
+    if (saved)
+      JSON.parse(saved).forEach((n) => playedNumbers.add(parseInt(n, 10)));
+  } catch (e) {}
+  try {
+    const savedCurrentNumber = localStorage.getItem("currentNumber");
+    if (savedCurrentNumber) currentNumber = parseInt(savedCurrentNumber, 10);
+  } catch (e) {}
+  // Update played numbers UI after restoring
+  updatePlayedNumbers();
 
   // Use the default song count unconditionally
   let songCount = DEFAULT_SONG_COUNT;
@@ -82,83 +97,69 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
 
   // Try to fetch songs.json and merge metadata into musicLibrary
-  (async function loadSongsJson() {
-    try {
-      // First, allow an embed via a global variable for file:// workflows.
-      const globalData =
-        (typeof window !== "undefined" &&
-          (window.SONGS_JSON || window.songsJson || window.__SONGS_JSON__)) ||
-        null;
-      let data = null;
-      if (globalData) {
-        data = globalData;
-      } else {
-        const res = await fetch("songs.json", { cache: "no-store" });
-        if (!res.ok) return;
-        data = await res.json();
-      }
-
-      if (!Array.isArray(data)) return;
-      data.forEach((entry) => {
-        const id = Number(entry["Номер"] || entry["number"] || entry.id);
-        if (!id || id < 1 || id > songCount) return;
-        const title = entry["Название"] || entry["title"] || "";
-        const artist = entry["Исполнитель"] || entry["artist"] || "";
-        songsMeta[id] = { title: title || `Трек ${id}`, artist: artist || "" };
-        // apply to musicLibrary if present
-        const idx = id - 1;
-        if (musicLibrary[idx]) {
-          musicLibrary[idx].title = songsMeta[id].title;
-          musicLibrary[idx].artist = songsMeta[id].artist;
+  function loadSongsJson() {
+    fetch("songs.json", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        data.forEach((entry) => {
+          const id = Number(entry["Номер"] || entry["number"] || entry.id);
+          if (!id || id < 1 || id > songCount) return;
+          const title = entry["Название"] || entry["title"] || "";
+          const artist = entry["Исполнитель"] || entry["artist"] || "";
+          songsMeta[id] = {
+            title: title || `Трек ${id}`,
+            artist: artist || "",
+          };
+          // apply to musicLibrary if present
+          const idx = id - 1;
+          if (musicLibrary[idx]) {
+            musicLibrary[idx].title = songsMeta[id].title;
+            musicLibrary[idx].artist = songsMeta[id].artist;
+          }
+        });
+        // If we already had a currentNumber loaded earlier, update the shown title
+        if (currentNumber && songTitle) {
+          const meta = songsMeta[currentNumber];
+          if (meta) {
+            songTitle.textContent = meta.artist
+              ? `${meta.title} — ${meta.artist}`
+              : meta.title;
+          }
         }
+      })
+      .catch((e) => {
+        // ignore fetch errors (e.g., file:// environment)
       });
-
-      // If we already had a currentNumber loaded earlier, update the shown title
-      if (currentNumber && songTitle) {
-        const meta = songsMeta[currentNumber];
-        if (meta) {
-          songTitle.textContent = meta.artist
-            ? `${meta.title} — ${meta.artist}`
-            : meta.title;
-        }
+  }
+  function loadSongsJson() {
+    if (!Array.isArray(window.SONGS || SONGS)) return;
+    const data = window.SONGS || SONGS;
+    data.forEach((entry) => {
+      const id = Number(entry["Номер"] || entry["number"] || entry.id);
+      if (!id || id < 1 || id > songCount) return;
+      const title = entry["Название"] || entry["title"] || "";
+      const artist = entry["Исполнитель"] || entry["artist"] || "";
+      songsMeta[id] = { title: title || `Трек ${id}`, artist: artist || "" };
+      // apply to musicLibrary if present
+      const idx = id - 1;
+      if (musicLibrary[idx]) {
+        musicLibrary[idx].title = songsMeta[id].title;
+        musicLibrary[idx].artist = songsMeta[id].artist;
       }
-    } catch (e) {
-      // ignore fetch errors (e.g., file:// environment)
-    }
-  })();
-
-  // Restore state
-  try {
-    const saved = localStorage.getItem("playedNumbers");
-    if (saved)
-      JSON.parse(saved).forEach((n) => playedNumbers.add(parseInt(n, 10)));
-  } catch (e) {}
-  // Render any restored played numbers into the UI
-  try {
-    updatePlayedNumbers();
-  } catch (e) {}
-  const savedCurrentNumber = localStorage.getItem("currentNumber");
-  if (savedCurrentNumber) {
-    currentNumber = parseInt(savedCurrentNumber, 10);
-    if (currentNumberDisplay) {
-      currentNumberDisplay.textContent = currentNumber;
-      currentNumberDisplay.classList.remove("animate-pulse");
-    }
-    const song = musicLibrary.find((t) => t.id === currentNumber);
-    if (song) {
-      const display = song.artist
-        ? `${song.title} — ${song.artist}`
-        : song.title;
-      if (nowPlayingEl) nowPlayingEl.textContent = display;
-      if (songTitle) songTitle.textContent = "";
-      if (audioPlayer) audioPlayer.src = song.url;
-      if (playerContainer) playerContainer.classList.remove("player-hidden");
+    });
+    // If we already had a currentNumber loaded earlier, update the shown title
+    if (currentNumber && songTitle) {
+      const meta = songsMeta[currentNumber];
+      if (meta) {
+        songTitle.textContent = meta.artist
+          ? `${meta.title} — ${meta.artist}`
+          : meta.title;
+      }
     }
   }
-
-  // Bingo elements
-  let bingoCardEl = document.getElementById("bingoCard");
-  let bingoMarkedCount = document.getElementById("bingoMarkedCount");
+  loadSongsJson();
+  // ...existing code...
 
   const urlParams = new URLSearchParams(window.location.search);
   const isCardPage = window.location.pathname.endsWith("card.html");
@@ -823,23 +824,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  async function tryPlay(audioPlayer, attempts = 3) {
-    for (let i = 0; i < attempts; i++) {
-      try {
-        await audioPlayer.play();
-        return true; // success
-      } catch (err) {
-        console.error(`Playback attempt ${i + 1} failed:`, err);
-        if (i < attempts - 1) {
-          // wait a bit before retry
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+  function tryPlay(audioPlayer, attempts = 3) {
+    return new Promise((resolve) => {
+      let i = 0;
+      function attempt() {
+        audioPlayer
+          .play()
+          .then(() => {
+            resolve(true);
+          })
+          .catch((err) => {
+            console.error(`Playback attempt ${i + 1} failed:`, err);
+            i++;
+            if (i < attempts) {
+              setTimeout(attempt, 500);
+            } else {
+              resolve(false);
+            }
+          });
       }
-    }
-    return false; // failed
+      attempt();
+    });
   }
 
-  async function finishSpin(number) {
+  function finishSpin(number) {
     currentNumber = number;
     playedNumbers.add(number);
     localStorage.setItem(
@@ -870,66 +878,72 @@ document.addEventListener("DOMContentLoaded", () => {
     // Attempt to load a local song file matching the number, probing extensions
     // and falling back to the next available id if needed.
     let song = null;
-    try {
-      song = await loadSongWithFallback(number);
-    } catch (e) {
-      console.warn("Song fallback loader failed", e);
-    }
-
-    if (song && audioPlayer && songTitle && playerContainer) {
-      playerContainer.style.opacity = 0;
-      setTimeout(() => {
-        audioPlayer.pause();
-        audioPlayer.currentTime = 0;
-        audioPlayer.src = song.url;
-        audioPlayer.load();
-        audioPlayer.setAttribute("autoplay", "");
-        const display = song.artist
-          ? `${song.title} — ${song.artist}`
-          : song.title;
-        if (nowPlayingEl) nowPlayingEl.textContent = display;
-        if (songTitle) songTitle.textContent = "";
-        playerContainer.classList.remove("player-hidden");
-        playerContainer.style.opacity = 1;
-        playerContainer.style.transition =
-          "opacity 0.5s ease, height 0.3s ease";
-        const success = await tryPlay(audioPlayer);
-        if (!success) {
-          // Перейти к следующей песне без сообщения
+    loadSongWithFallback(number)
+      .then((result) => {
+        song = result;
+      })
+      .catch((e) => {
+        console.warn("Song fallback loader failed", e);
+      })
+      .then(() => {
+        if (song && audioPlayer && songTitle && playerContainer) {
+          playerContainer.style.opacity = 0;
           setTimeout(() => {
-            if (spinBtn && !spinBtn.disabled) {
-              spinBtn.click();
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            audioPlayer.src = song.url;
+            audioPlayer.load();
+            audioPlayer.setAttribute("autoplay", "");
+            const display = song.artist
+              ? `${song.title} — ${song.artist}`
+              : song.title;
+            if (nowPlayingEl) nowPlayingEl.textContent = display;
+            if (songTitle) songTitle.textContent = "";
+            playerContainer.classList.remove("player-hidden");
+            playerContainer.style.opacity = 1;
+            playerContainer.style.transition =
+              "opacity 0.5s ease, height 0.3s ease";
+            tryPlay(audioPlayer).then((success) => {
+              if (!success) {
+                // Перейти к следующей песне без сообщения
+                setTimeout(() => {
+                  if (spinBtn && !spinBtn.disabled) {
+                    spinBtn.click();
+                  }
+                }, 1000);
+              }
+            });
+          }, 200);
+        } else {
+          // No local files found — show a helpful message and enable controls so user can pick a file
+          try {
+            if (audioPlayer) audioPlayer.controls = true;
+            showNotification(
+              "Файл трека не найден. Пожалуйста, добавьте songs/<id>.mp3 или другие форматы."
+            );
+          } catch (e) {}
+        }
+        updatePlayedNumbers();
+        // Highlight the tile that matches the freshly drawn number
+        try {
+          if (playedNumbersContainer) {
+            const tiles = Array.from(playedNumbersContainer.children);
+            const target = tiles.find(
+              (el) => el.textContent === String(number)
+            );
+            if (target) {
+              target.classList.add("winner");
+              setTimeout(() => target.classList.remove("winner"), 1500);
             }
-          }, 1000);
-        }
-      }, 200);
-    } else {
-      // No local files found — show a helpful message and enable controls so user can pick a file
-      try {
-        if (audioPlayer) audioPlayer.controls = true;
-        showNotification(
-          "Файл трека не найден. Пожалуйста, добавьте songs/<id>.mp3 или другие форматы."
-        );
-      } catch (e) {}
-    }
-    updatePlayedNumbers();
-    // Highlight the tile that matches the freshly drawn number
-    try {
-      if (playedNumbersContainer) {
-        const tiles = Array.from(playedNumbersContainer.children);
-        const target = tiles.find((el) => el.textContent === String(number));
-        if (target) {
-          target.classList.add("winner");
-          setTimeout(() => target.classList.remove("winner"), 1500);
-        }
-      }
-    } catch (e) {}
+          }
+        } catch (e) {}
 
-    if (spinBtn) {
-      spinBtn.disabled = false;
-      spinBtn.innerHTML = '<i data-feather="play"></i> Крутить снова';
-      feather.replace();
-    }
+        if (spinBtn) {
+          spinBtn.disabled = false;
+          spinBtn.innerHTML = '<i data-feather="play"></i> Крутить снова';
+          feather.replace();
+        }
+      });
   }
 
   function updatePlayedNumbers() {

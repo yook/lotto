@@ -1,3 +1,37 @@
+@media print {
+    #bingoMarkedCount {
+        color: #fff !important;
+    }
+}
+@media print {
+    .number-tile, .bingo-cell {
+        border: 2px solid #888 !important;
+        background: #fff !important;
+        color: #000 !important;
+        box-shadow: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .bingo-cell[data-number=""]:not(.bingo-marked) {
+        background: #e5e7eb !important;
+        border: 2px solid #888 !important;
+    }
+    .free-icon {
+        color: #000 !important;
+        filter: none !important;
+    }
+    #currentNumber {
+        color: #000 !important;
+        text-shadow: none !important;
+    }
+    h1, h2, h3, h4, h5, h6, p, span, div, label {
+        color: #000 !important;
+        background: #fff !important;
+    }
+    #bingoMarkedCount {
+        display: none !important;
+    }
+}
 
 @keyframes numberChange {
     0% { 
@@ -63,11 +97,14 @@
     height: 3rem;
     font-size: 0.95rem;
     position: relative;
+    border: 2px solid #7c3aed; /* purple-600 for visibility */
+    box-sizing: border-box;
 }
 .number-tile:hover {
     transform: scale(1.1);
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
     z-index: 40;
+    border-color: #a78bfa; /* purple-400 on hover */
 }
 nav a, nav button {
     transition: all 0.2s ease;
@@ -244,7 +281,7 @@ nav a:hover, nav button:hover {
 /* Style free cell — only apply this special styling when the cell is NOT marked.
    If the free cell has the `.bingo-marked` class it will inherit the marked style. */
 .bingo-cell[data-number=""]:not(.bingo-marked) {
-    background: linear-gradient(90deg, rgba(255,194,0,0.15), rgba(255,140,0,0.12));
+    background: #e5e7eb;
 }
 
 .free-icon {
