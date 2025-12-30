@@ -1,4 +1,9 @@
 @media print {
+    body {
+        background: #fff !important;
+    }
+}
+@media print {
     #bingoMarkedCount {
         color: #fff !important;
     }
